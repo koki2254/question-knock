@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>問題一覧</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+            text-align: left;
+        }
+        .btn {
+            padding: 4px 8px;
+            background-color: #3498db;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-right: 4px;
+        }
+        .btn-delete {
+            background-color: #e74c3c;
+        }
+        .btn-back {
+            margin-bottom: 10px;
+            display: inline-block;
+            background-color: #2ecc71;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>問題一覧</h1>
+
+    <!-- 戻るボタン -->
+    <a href="/admin/dashboard" class="btn btn-back">ダッシュボードに戻る</a>
+
+    <table border="1">
+        <tr>
+            <th>ID</th>
+            <th>試験種</th>
+            <th>年度</th>
+            <th>季節</th>
+            <th>タグID</th>
+            <th>問題番号</th>
+            <th>問題文</th>
+            <th>アクション</th>
+        </tr>
+
+        <tr th:each="q : ${questions}">
+            <td th:text="${q.questionId}"></td>
+            <td th:text="${q.examCategory} + ' ' + ${q.examSession}"></td>
+            <td th:text="${q.year}"></td>
+            <td th:text="${q.season}"></td>
+            <td th:text="${q.tagId}"></td>
+            <td th:text="${q.questionNumber}"></td>
+            <td th:text="${q.questionText}"></td>
+
+            <!-- 編集 & 削除ボタン -->
+            <td>
+                <a th:href="@{'/admin/question/edit/' + ${q.questionId}}" class="btn">編集</a>
+                <form th:action="@{'/admin/question/delete/' + ${q.questionId}}" 
+				      method="post" 
+				      style="display:inline;" 
+				      onsubmit="return confirm('本当に削除しますか？');">
+				    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+				    <button type="submit" class="btn btn-delete">削除</button>
+				</form>
+
+            </td>
+        </tr>
+    </table>
+
+</body>
+</html>

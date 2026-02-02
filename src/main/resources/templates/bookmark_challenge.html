@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>苦手対策モード</title>
+<style th:replace="header :: style"></style>
+
+<style>
+    body { font-family: "Segoe UI", sans-serif; background: #f5f5f5; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; }
+    .main-wrapper { display: flex; flex: 1; height: 100%; overflow: hidden; }
+    .quiz-area { flex: 2; padding: 20px; overflow-y: auto; }
+    .quiz-container { max-width: 800px; background: #fff; margin: 0 auto; padding: 25px; border-radius: 10px; }
+    
+    /* 質問チャットエリアのスタイル（省略時は challenge.html と同じものを適用してください） */
+    .ai-area { flex: 1; background: #fff; border-left: 1px solid #ddd; display: flex; flex-direction: column; padding: 10px; }
+    
+    .question-box { display: none; } .question-box.active { display: block; }
+    .choice-btn { display: block; width: 100%; padding: 10px; margin: 5px 0; text-align: left; background: #f9f9f9; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; }
+    .choice-btn:hover { background: #eef; }
+    .correct-answer { background: #d4edda; border-color: #28a745; }
+    .wrong-answer { background: #f8d7da; border-color: #dc3545; }
+    
+    .btn-bookmark { border: none; background: none; font-size: 1.5rem; cursor: pointer; color: #ffd700; } /* 最初から金色 */
+</style>
+</head>
+<body>
+
+<div th:replace="header :: part"></div>
+
+<div class="main-wrapper">
+    <div class="quiz-area">
+        <div class="quiz-container">
+            <h2>🔥 苦手克服モード</h2>
+            
+            <form id="quizForm" th:action="@{/challenge/submit}" method="post">
+                <div th:each="q, iterStat : ${questions}" 
+                     th:id="'q-container-' + ${iterStat.index}" 
+                     class="question-box" 
+                     th:classappend="${iterStat.index == 0} ? ' active' : ''">
+
+                    <div style="text-align: right;">
+                        <button type="button" class="btn-bookmark" 
+                                th:onclick="|toggleBookmark(${q.questionId}, this)|"
+                                title="ブックマークを解除">★</button>
+                    </div>
+
+                    <h3 th:text="'問 ' + (${iterStat.index} + 1)"></h3>
+                    <p th:text="${q.questionText}"></p>
+                    <img th:if="${q.imageUrl}" th:src="@{${q.imageUrl}}" style="max-width:100%">
+
+                    <div class="choices">
+                        <div th:each="choice : ${q.choices}">
+                            <button type="button" class="choice-btn"
+                                    th:onclick="|checkAnswer(this, ${choice.isCorrect})|">
+                                <span th:text="${choice.choiceText}"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="navigation" style="margin-top:20px; text-align:right;">
+                        <button type="button" th:onclick="'nextQuestion(' + ${iterStat.index} + ')'">次へ</button>
+                    </div>
+                </div>
+                <button type="submit" id="finalSubmit" style="display:none;">結果を見る</button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="ai-area">
+        <p>AI先生エリア</p>
+    </div>
+</div>
+
+<script>
+    // 簡易的な切り替えスクリプト
+    function nextQuestion(index) {
+        document.getElementById('q-container-' + index).classList.remove('active');
+        const next = document.getElementById('q-container-' + (index + 1));
+        if (next) {
+            next.classList.add('active');
+        } else {
+            // 最後の問題なら送信ボタンを表示などの処理
+            document.getElementById('finalSubmit').style.display = 'block';
+            document.getElementById('finalSubmit').click();
+        }
+    }
+
+    function checkAnswer(btn, isCorrect) {
+        if(isCorrect) {
+            btn.style.backgroundColor = "#d4edda";
+            alert("正解！");
+        } else {
+            btn.style.backgroundColor = "#f8d7da";
+            alert("不正解...");
+        }
+    }
+
+    function toggleBookmark(qid, btn) {
+        fetch('/api/bookmark/toggle?questionId=' + qid, { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === 'removed') {
+                btn.style.color = '#ccc'; // 灰色に
+            } else {
+                btn.style.color = '#ffd700'; // 金色に
+            }
+        });
+    }
+</script>
+</body>
+</html>

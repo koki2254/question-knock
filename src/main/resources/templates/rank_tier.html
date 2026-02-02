@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>現在のランク & ランキング</title>
+    <th:block th:replace="~{fragments/header :: style}"></th:block>
+    <link href="https://unpkg.com/pixelarticons@1.8.1/pixelarticons.css" rel="stylesheet">
+    
+    <style>
+        /* === 配色定義 (Homeと統一) === */
+        :root {
+            --bg-color: #fecd1a;      /* 中黄 */
+            --main-border: #1e2749;   /* 藍色 */
+            --accent-white: #ffffff;  /* 白 */
+            --accent-red: #e73228;    /* 赤 */
+            --shadow-color: #1e2749;  /* 影 */
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: none;
+            font-family: "Press Start 2P", "DotGothic16", monospace;
+            color: var(--main-border);
+            padding-top: 110px;
+            padding-bottom: 60px;
+            text-align: center;
+        }
+
+        .container { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
+
+        /* === タイトルエリア === */
+        .page-header { margin-bottom: 40px; }
+        .page-title {
+            font-size: 2.5rem; margin-bottom: 10px; font-weight: bold;
+            text-shadow: none;
+        }
+
+        /* === ランクカードエリア === */
+        .rank-cards { 
+            display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; margin-bottom: 60px; 
+        }
+
+        .rank-box {
+            background: var(--accent-white);
+            border: 4px solid var(--main-border);
+            box-shadow: 6px 6px 0px var(--shadow-color);
+            padding: 30px 20px; /* 上下のパディングを少し増やしました */
+            width: 350px;
+            text-align: center;
+        }
+
+        .rank-title {
+            font-size: 1.2rem;
+            border-bottom: 2px solid var(--main-border);
+            padding-bottom: 10px; margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .rank-badge {
+            font-size: 5rem; text-align: center; margin: 10px 0; /* マージン調整 */
+            font-weight: bold;
+            text-shadow: 3px 3px 0px rgba(0,0,0,0.1);
+        }
+        .rank-S { color: #f1c40f; text-shadow: 3px 3px 0px var(--main-border); }
+        .rank-A { color: var(--accent-red); }
+        .rank-B { color: var(--main-border); }
+        .rank-C { color: #2ecc71; }
+        .rank-D { color: #3498db; }
+        .rank-E { color: #ccc; }
+
+        /* === ランキング表エリア === */
+        .ranking-title {
+            font-size: 2rem; margin-bottom: 30px;
+            display: flex; justify-content: center; align-items: center; gap: 10px;
+        }
+
+        .ranking-section { 
+            display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; 
+        }
+        .ranking-box { 
+            flex: 1; min-width: 350px; 
+            background: var(--accent-white);
+            border: 4px solid var(--main-border);
+            box-shadow: 6px 6px 0px var(--shadow-color);
+            padding: 10px;
+        }
+
+        /* テーブル (ピクセル風) */
+        table {
+            width: 100%; border-collapse: collapse; 
+            font-size: 0.9rem;
+        }
+        th, td {
+            padding: 10px; border: 2px solid var(--main-border);
+            text-align: center;
+        }
+        thead tr {
+            background: var(--main-border); color: white;
+        }
+        tbody tr:nth-child(even) { background: #f9f9f9; }
+
+        /* ユーザーアイコン */
+        .pixel-icon {
+            width: 32px; height: 32px; 
+            border: 2px solid var(--main-border);
+            vertical-align: middle; margin-right: 8px;
+            background: #eee; object-fit: cover;
+        }
+        .user-cell { text-align: left; display: flex; align-items: center; }
+        
+        /* 戻るボタン */
+        .btn-back {
+            display: inline-block; margin-top: 60px;
+            background: var(--main-border); color: white;
+            border: 4px solid var(--main-border);
+            padding: 15px 40px; text-decoration: none;
+            font-weight: bold; font-size: 1rem;
+            box-shadow: 6px 6px 0px rgba(0,0,0,0.3);
+            transition: all 0.1s;
+        }
+        .btn-back:hover {
+            background: var(--accent-red);
+            border-color: var(--accent-red);
+            transform: translate(2px, 2px);
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.3);
+        }
+
+        /* レスポンシブ */
+        @media (max-width: 900px) {
+            .ranking-section { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <nav th:replace="~{fragments/header :: part}"></nav>
+
+    <div class="container">
+        
+        <div class="page-header">
+            <h1 class="page-title"><i class="px px-user"></i> YOUR STATUS</h1>
+        </div>
+        
+        <div class="rank-cards">
+            
+            <div class="rank-box">
+                <div class="rank-title">基本情報技術者</div>
+                <div class="rank-badge" th:classappend="'rank-' + ${basicRank}" th:text="${basicRank}">E</div>
+                </div>
+
+            <div class="rank-box">
+                <div class="rank-title">応用情報技術者</div>
+                <div class="rank-badge" th:classappend="'rank-' + ${appliedRank}" th:text="${appliedRank}">E</div>
+                </div>
+
+        </div>
+
+        <h2 class="ranking-title">
+            <i class="px px-trophy"></i> TOP 10 RANKING
+        </h2>
+
+        <div class="ranking-section">
+            
+            <div class="ranking-box">
+                <h3>BASIC</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>PLAYER</th>
+                            <th>SCORE</th>
+                            <th>RK</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="r, stat : ${basicRanking}">
+                            <td th:text="${stat.count}">1</td>
+                            <td>
+                                <div class="user-cell">
+                                    <th:block th:if="${r.user != null}">
+                                        <img th:if="${r.user.iconBase64 != null}" 
+                                             th:src="${r.user.iconBase64}" class="pixel-icon" />
+                                        <img th:if="${r.user.iconBase64 == null}" 
+                                             src="/images/default_avatar.png" 
+                                             class="pixel-icon" />
+                                        <span th:text="${r.user.nickname}">Name</span>
+                                    </th:block>
+                                    <span th:if="${r.user == null}">Unknown</span>
+                                </div>
+                            </td>
+                            <td th:text="${r.score}">0</td>
+                            <td th:classappend="'rank-' + ${r.rankGrade}" th:text="${r.rankGrade}">E</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="ranking-box">
+                <h3>APPLIED</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>PLAYER</th>
+                            <th>SCORE</th>
+                            <th>RK</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="r, stat : ${appliedRanking}">
+                            <td th:text="${stat.count}">1</td>
+                            <td>
+                                <div class="user-cell">
+                                    <th:block th:if="${r.user != null}">
+                                        <img th:if="${r.user.iconBase64 != null}" 
+                                             th:src="${r.user.iconBase64}" class="pixel-icon" />
+                                        <img th:if="${r.user.iconBase64 == null}" 
+                                             src="/images/default_avatar.png" 
+                                             class="pixel-icon" />
+                                        <span th:text="${r.user.nickname}">Name</span>
+                                    </th:block>
+                                    <span th:if="${r.user == null}">Unknown</span>
+                                </div>
+                            </td>
+                            <td th:text="${r.score}">0</td>
+                            <td th:classappend="'rank-' + ${r.rankGrade}" th:text="${r.rankGrade}">E</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+        
+
+    </div>
+</body>
+</html>

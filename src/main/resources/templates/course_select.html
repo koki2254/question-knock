@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>コース選択 - Question Knock</title>
+    <th:block th:replace="~{fragments/header :: style}"></th:block>
+
+    <link href="https://unpkg.com/pixelarticons@1.8.1/pixelarticons.css" rel="stylesheet">
+    
+    <style>
+        /* === 配色定義 === */
+        :root {
+            --bg-color: #fecd1a;      /* 中黄 */
+            --main-border: #1e2749;   /* 藍色 */
+            --accent-white: #ffffff;  /* 白 */
+            --accent-red: #e73228;    /* 赤 */
+            --shadow-color: #1e2749;  /* 影 */
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: none;
+            font-family: "Press Start 2P", "DotGothic16", monospace;
+            color: var(--main-border);
+            padding-top: 110px; /* ヘッダー + 余白 */
+            padding-bottom: 40px;
+            text-align: center;
+        }
+
+        .container { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
+
+        /* === タイトルエリア === */
+        .page-title {
+            font-size: 3rem; /* ★文字サイズを大きく */
+            margin-bottom: 20px;
+            /* text-shadow: ... を削除しました */
+            text-shadow: none; 
+            font-weight: bold;
+            line-height: 1.4;
+        }
+        .page-subtitle {
+            font-size: 1.4rem; /* ★サブタイトルも大きく */
+            margin-bottom: 60px;
+            color: var(--main-border);
+            font-weight: bold;
+        }
+
+        /* === 選択カードのグリッド === */
+        .selection-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 50px; /* 間隔も少し広めに */
+        }
+
+        /* === コース選択カード === */
+        .course-card {
+            display: block;
+            background: var(--accent-white);
+            border: 4px solid var(--main-border);
+            box-shadow: 8px 8px 0px var(--shadow-color);
+            padding: 50px 30px; /* パディングを増やしてゆったりと */
+            text-decoration: none;
+            color: var(--main-border);
+            transition: all 0.1s;
+            position: relative;
+        }
+
+        /* ホバー時の動き */
+        .course-card:hover {
+            transform: translate(4px, 4px);
+            box-shadow: 4px 4px 0px var(--shadow-color);
+            background: #fffbe6;
+            border-color: var(--accent-red);
+        }
+        .course-card:hover .course-title {
+            color: var(--accent-red);
+        }
+
+        /* アイコン */
+        .course-icon {
+            font-size: 6rem; /* ★アイコンを巨大化 */
+            margin-bottom: 25px;
+            color: var(--main-border);
+            display: inline-block;
+        }
+
+        /* コース名 */
+        .course-title {
+            font-size: 2rem; /* ★文字サイズを大きく */
+            font-weight: bold;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        /* 説明文 */
+        .course-desc {
+            font-size: 1.1rem; /* ★説明文も見やすく */
+            line-height: 1.8;
+            font-weight: bold; /* 読みやすく太字に */
+            color: #444;
+            display: block;
+        }
+
+        /* レスポンシブ (スマホ対応) */
+        @media (max-width: 768px) {
+            .selection-grid {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+            .page-title { font-size: 2rem; }
+            .course-icon { font-size: 4rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav th:replace="~{fragments/header :: part}"></nav>
+
+    <div class="container">
+        <h1 class="page-title">試験区分を選択</h1>
+        <p class="page-subtitle">どちらの試験対策を行いますか？</p>
+
+        <div class="selection-grid">
+            
+            <a th:href="@{/fields(exam='基本')}" class="course-card">
+                <i class="px px-monitor course-icon"></i>
+                <span class="course-title">基本情報技術者</span>
+                <span class="course-desc">ITの基礎知識を<br>固めたい方向け</span>
+            </a>
+
+            <a th:href="@{/fields(exam='応用')}" class="course-card">
+                <i class="px px-shield course-icon"></i>
+                <span class="course-title">応用情報技術者</span>
+                <span class="course-desc">ワンランク上の知識を<br>目指す方向け</span>
+            </a>
+
+        </div>
+    </div>
+    <div th:if="${hasProgress}" style="margin-top: 20px; padding: 20px; background: #fff3cd; border: 1px solid #ffeeba; border-radius: 12px; display: inline-block;">
+        <p style="margin-bottom: 10px; font-weight: bold; color: #856404;">💡 前回の学習データ（中断）が見つかりました</p>
+        <a th:href="@{/challenge/resume}" 
+           class="course-card" 
+           style="width: auto; padding: 10px 30px; background: #ffc107; display: inline-block; box-shadow: none;">
+            <span style="font-weight: bold;">前回の続きから再開する</span>
+        </a>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>ランクマッチ (100本ノック)</title>
+    <th:block th:replace="~{fragments/header :: style}"></th:block>
+    <link href="https://unpkg.com/pixelarticons@1.8.1/pixelarticons.css" rel="stylesheet">
+
+    <style>
+        /* === 基本設定 === */
+        :root {
+            --bg-color: #fecd1a;      /* 中黄 */
+            --main-border: #1e2749;   /* 藍色 */
+            --accent-white: #ffffff;  /* 白 */
+            --accent-red: #e73228;    /* 赤 */
+            --shadow-color: #1e2749;  /* 影 */
+        }
+
+        body { 
+            /* ヘッダーと同じフォントを適用 */
+            font-family: "Press Start 2P", "DotGothic16", monospace; 
+            /* 背景色は「変更なし」とのことですが、全体統一のため黄色にするか、
+               あるいは「問題エリアの背景」だけ白のままにするか。
+               「背景色も変更なし（#f4f4f9）」をご希望と解釈し、body背景は元のままにします。 */
+            background: #f4f4f9; 
+            color: var(--main-border); 
+            padding-top: 100px; 
+        }
+        
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; position: relative; }
+
+        /* === タイマー (ピクセル風) === */
+        .timer-box {
+            position: fixed; top: 70px; right: 20px;
+            background: var(--main-border); color: #00ff00; /* デジタル緑 */
+            padding: 10px 20px; 
+            border: 4px solid #fff;
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.3);
+            font-family: "Press Start 2P", monospace; font-size: 1.2rem;
+            z-index: 2000; 
+        }
+        .timer-danger { color: #ff0000; animation: pulse 0.5s infinite alternate; }
+        @keyframes pulse { from { opacity: 1; } to { opacity: 0.5; } }
+
+        /* === スライダー (色調整) === */
+        .slider-container {
+            position: fixed; top: 75px; left: 50%; transform: translateX(-50%);
+            width: 60%; max-width: 600px; height: 40px; z-index: 1500;
+            display: flex; align-items: center; justify-content: center;
+        }
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; cursor: pointer; }
+        input[type=range]:focus { outline: none; }
+        
+        /* トラック（レール） */
+        input[type=range]::-webkit-slider-runnable-track { 
+            width: 100%; height: 16px; cursor: pointer; 
+            background: var(--main-border); border: 2px solid #fff; 
+        }
+        input[type=range]::-moz-range-track { 
+            width: 100%; height: 16px; cursor: pointer; 
+            background: var(--main-border); border: 2px solid #fff; 
+        }
+        
+        /* つまみ */
+        input[type=range]::-webkit-slider-thumb {
+            height: 28px; width: 14px; background: var(--accent-red); 
+            border: 2px solid #fff; cursor: pointer;
+            -webkit-appearance: none; margin-top: -8px; 
+            box-shadow: 2px 2px 0px rgba(0,0,0,0.5);
+        }
+
+        .slider-tooltip {
+            position: absolute; top: -35px; left: 0; transform: translateX(-50%);
+            background: var(--main-border); color: #fff; 
+            padding: 5px 10px; border: 2px solid #fff;
+            font-family: "Press Start 2P", monospace; font-size: 0.8rem; 
+            pointer-events: none; opacity: 0; transition: opacity 0.2s;
+        }
+        .slider-tooltip.show { opacity: 1; }
+
+        /* === 問題カード (ピクセル枠を追加) === */
+        .question-slide { display: none; }
+        .question-slide.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .question-card {
+            background: white; 
+            border: 4px solid var(--main-border); /* 枠線をピクセル風に */
+            box-shadow: 8px 8px 0px rgba(0,0,0,0.1); /* 影をハードに */
+            padding: 40px; min-height: 400px;
+        }
+        .question-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 4px solid #eee; padding-bottom: 10px; margin-bottom: 20px;
+        }
+        .question-number { 
+            font-family: "Press Start 2P", monospace; /* 番号はピクセルフォント */
+            font-size: 1rem; color: var(--main-border); 
+        }
+        
+        /* 問題文 (読みやすさ重視でゴシック体を維持しつつ、少し太く) */
+        .question-text { 
+            font-family: "DotGothic16", "Segoe UI", sans-serif; /* 少しデジタル感を出しつつ読みやすく */
+            font-size: 1.4rem; margin-bottom: 30px; line-height: 1.6; font-weight: bold; 
+            color: #222;
+        }
+
+        /* === 選択肢エリア === */
+        .choices-area { display: flex; flex-direction: column; gap: 20px; }
+        
+        .choice-label {
+            display: flex; align-items: center;
+            padding: 20px 25px; 
+            border: 4px solid #e0e0e0; /* 枠線を太く */
+            cursor: pointer; 
+            transition: all 0.1s; 
+            background: #fff;
+            position: relative;
+        }
+        /* ホバー時: 枠を青く、少し浮かす */
+        .choice-label:hover { 
+            background-color: #f0f8ff; 
+            border-color: #2196f3; 
+            transform: translate(-2px, -2px);
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
+        }
+        /* 選択時: 枠を青く、凹ませる */
+        .choice-label:has(input:checked) { 
+            background-color: #e3f2fd; 
+            border-color: #2196f3; 
+            box-shadow: inset 4px 4px 0px rgba(0,0,0,0.05);
+            transform: none;
+        }
+
+        .choice-input { transform: scale(1.8); margin-right: 20px; cursor: pointer; accent-color: var(--main-border); }
+
+        .choice-mark {
+            font-family: "DotGothic16", monospace;
+            font-size: 1.5rem; font-weight: bold; margin-right: 20px; min-width: 30px;
+        }
+
+        .choice-content {
+            display: flex; align-items: center; flex-wrap: wrap; gap: 20px; flex: 1;
+        }
+
+        .choice-img {
+            max-width: 250px; max-height: 250px; object-fit: contain;
+            border: 2px solid #ddd;
+        }
+
+        .choice-text-span {
+            font-family: "DotGothic16", "Segoe UI", sans-serif;
+            font-size: 1.4rem; font-weight: 500;
+        }
+
+        /* === ナビゲーションボタン (ピクセル風) === */
+        .nav-buttons { display: flex; justify-content: space-between; margin-top: 40px; }
+        
+        .nav-btn {
+            padding: 15px 30px; font-size: 1rem; 
+            border: 4px solid var(--main-border); 
+            cursor: pointer; color: var(--main-border); background: white;
+            font-family: "Press Start 2P", monospace;
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.2);
+            transition: all 0.1s;
+        }
+        .nav-btn:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+            background: #eee;
+        }
+        
+        .btn-hidden { visibility: hidden; }
+
+        /* FINISHボタン (赤) */
+        .submit-btn {
+            padding: 15px 50px; font-size: 1.2rem; color: white;
+            background: var(--accent-red); 
+            border: 4px solid var(--main-border);
+            cursor: pointer; 
+            font-family: "Press Start 2P", monospace;
+            box-shadow: 6px 6px 0px rgba(0,0,0,0.3);
+            animation: none; /* 元のアニメーション削除 */
+            transition: all 0.1s;
+        }
+        .submit-btn:hover {
+            transform: translate(4px, 4px);
+            box-shadow: 2px 2px 0px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <nav th:replace="~{fragments/header :: part}"></nav>
+
+    <div class="slider-container">
+        <input type="range" min="0" th:max="${questions.size() - 1}" value="0" class="slider" id="pageSlider">
+        <div class="slider-tooltip" id="sliderTooltip">1</div>
+    </div>
+
+    <div class="timer-box" id="timerDisplay">60:00</div>
+
+    <div class="container">
+        <form th:action="@{/challenge/rank/submit}" method="post" id="quizForm">
+            <input type="hidden" name="startTime" id="startTimeInput">
+
+            <div th:each="question, stat : ${questions}" class="question-slide" th:id="'slide-' + ${stat.index}">
+                
+                <div class="question-card">
+                    <div class="question-header">
+                        <span class="question-number" th:text="'Q. ' + ${stat.count} + ' / ' + ${questions.size()}"></span>
+                    </div>
+                    
+                    <div class="question-text">
+                        <p th:text="${question.questionText}"></p>
+
+                        <img th:if="${question.imageUrl}" th:src="@{${question.imageUrl}}" 
+                             style="max-width: 100%; height: auto; margin: 20px 0; display:block; border: 2px solid #ccc;" />
+                    </div>
+
+                    <div class="choices-area">
+                        <label th:each="choice, cStat : ${question.choices}" class="choice-label">
+                            
+                            <input type="radio" class="choice-input"
+                                   th:name="'question_' + ${question.questionId}" 
+                                   th:value="${choice.choiceId}">
+                            
+                            <span class="choice-mark" th:text="${labels[cStat.index]} + '.'"></span>
+
+                            <div class="choice-content">
+                                <img th:if="${choice.imageUrl != null}" 
+                                     th:src="@{${choice.imageUrl}}" 
+                                     class="choice-img" />
+
+                                <span class="choice-text-span" 
+                                      th:if="${choice.choiceText != null and choice.choiceText != ''}" 
+                                      th:text="${choice.choiceText}"></span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="nav-buttons">
+                    <button type="button" class="nav-btn btn-prev" 
+                            th:onclick="'prevQuestion(' + ${stat.index} + ')'"
+                            th:classappend="${stat.first} ? 'btn-hidden' : ''">
+                        ← PREV
+                    </button>
+
+                    <button type="button" class="nav-btn btn-next" 
+                            th:onclick="'nextQuestion(' + ${stat.index} + ')'"
+                            th:unless="${stat.last}">
+                        NEXT →
+                    </button>
+
+                    <button type="submit" class="submit-btn" th:if="${stat.last}">
+                        FINISH !!
+                    </button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+    <script th:inline="javascript">
+        const totalQuestions = /*[[${questions.size()}]]*/ 100;
+        let currentIdx = 0;
+        const slider = document.getElementById('pageSlider');
+        const tooltip = document.getElementById('sliderTooltip');
+
+        updateDisplay(0);
+
+        // スライダー操作
+        slider.addEventListener('input', function() {
+            const newIndex = parseInt(this.value);
+            updateDisplay(newIndex);
+            updateTooltipPosition(newIndex);
+            tooltip.classList.add('show');
+        });
+        slider.addEventListener('mouseenter', function() { tooltip.classList.add('show'); updateTooltipPosition(parseInt(this.value)); });
+        slider.addEventListener('mouseleave', function() { tooltip.classList.remove('show'); });
+
+        function updateTooltipPosition(index) {
+            tooltip.textContent = index + 1; 
+            const val = index; const max = parseInt(slider.max); const percentage = (val / max) * 100;
+            tooltip.style.left = `calc(${percentage}% + (${8 - percentage * 0.15}px))`;
+        }
+
+        // ナビゲーション
+        function nextQuestion(i) { if (i < totalQuestions - 1) updateDisplay(i + 1); }
+        function prevQuestion(i) { if (i > 0) updateDisplay(i - 1); }
+
+        function updateDisplay(newIndex) {
+            document.getElementById('slide-' + currentIdx).classList.remove('active');
+            document.getElementById('slide-' + newIndex).classList.add('active');
+            currentIdx = newIndex;
+            slider.value = newIndex;
+            window.scrollTo(0, 0);
+        }
+
+        // タイマー
+        const timeLimit = 3600; let remainingTime = timeLimit;
+        const timerDisplay = document.getElementById('timerDisplay');
+        const loadTime = Date.now();
+
+        const timerInterval = setInterval(() => {
+            remainingTime--;
+            const m = Math.floor(remainingTime / 60); const s = remainingTime % 60;
+            timerDisplay.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+            if (remainingTime <= 300) timerDisplay.classList.add('timer-danger');
+            if (remainingTime <= 0) {
+                clearInterval(timerInterval);
+                alert("TIME UP! 強制終了します！");
+                document.querySelector('form').submit();
+            }
+        }, 1000);
+
+        document.querySelector('form').addEventListener('submit', function() {
+            document.getElementById('startTimeInput').value = loadTime;
+        });
+    </script>
+</body>
+</html>

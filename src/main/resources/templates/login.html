@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>ログイン</title>
+    <style>
+        body { font-family: sans-serif; display: grid; place-items: center; min-height: 80vh; }
+        .login-box { padding: 40px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .google-btn {
+            display: inline-block;
+            background: #4285F4;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h2>ログイン</h2>
+        <p>Googleアカウントでログインしてください。</p>
+        
+        <a class="google-btn" th:href="@{/oauth2/authorization/google}">
+          Google でログイン
+        </a>
+    </div>
+</body>
+</html>

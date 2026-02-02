@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>ランクマッチ結果 - Question Knock</title>
+    <th:block th:replace="~{fragments/header :: style}"></th:block>
+    <link href="https://unpkg.com/pixelarticons@1.8.1/pixelarticons.css" rel="stylesheet">
+    
+    <style>
+        /* === 配色定義 === */
+        :root {
+            --bg-color: #fecd1a;      /* 中黄 */
+            --main-border: #1e2749;   /* 藍色 */
+            --accent-white: #ffffff;  /* 白 */
+            --accent-red: #e73228;    /* 赤 */
+            --shadow-color: #1e2749;  /* 影 */
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: none;
+            font-family: "Press Start 2P", "DotGothic16", monospace;
+            color: var(--main-border);
+            padding-top: 110px;
+            padding-bottom: 60px;
+            text-align: center;
+        }
+
+        .container { max-width: 800px; margin: 0 auto; padding: 0 20px; }
+
+        /* === タイトルエリア === */
+        .page-header { margin-bottom: 30px; }
+        .page-title {
+            font-size: 2.5rem; margin-bottom: 10px; font-weight: bold;
+            text-shadow: none;
+        }
+
+        /* === 結果カード (白背景・ピクセル枠) === */
+        .result-card {
+            background: var(--accent-white);
+            border: 4px solid var(--main-border);
+            box-shadow: 8px 8px 0px var(--shadow-color);
+            padding: 40px;
+            margin-bottom: 50px;
+            position: relative;
+        }
+
+        /* ランク表示 */
+        .rank-label { font-size: 1.2rem; margin-bottom: 10px; font-weight: bold; }
+        
+        .rank-grade {
+            font-size: 6rem;
+            font-weight: bold;
+            line-height: 1;
+            margin: 10px 0 30px 0;
+            text-shadow: 4px 4px 0px rgba(0,0,0,0.1);
+        }
+        /* ランク別の色 */
+        .rank-S { color: #f1c40f; text-shadow: 4px 4px 0px var(--main-border); }
+        .rank-A { color: var(--accent-red); }
+        .rank-B { color: var(--main-border); }
+        .rank-C { color: #2ecc71; }
+        .rank-D { color: #3498db; }
+        .rank-E { color: #ccc; }
+
+        /* スコア情報 */
+        .score-info {
+            font-size: 1.5rem;
+            border-top: 4px dashed #ddd;
+            padding-top: 20px;
+        }
+        .score-value { color: var(--accent-red); font-weight: bold; font-size: 2rem; }
+        .sub-info { font-size: 1rem; color: #666; margin-top: 10px; font-family: "DotGothic16", monospace; }
+
+        /* === ランキング表エリア === */
+        .ranking-section {
+            background: var(--accent-white);
+            border: 4px solid var(--main-border);
+            box-shadow: 6px 6px 0px var(--shadow-color);
+            padding: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .ranking-title {
+            font-size: 1.5rem; margin-bottom: 20px;
+            border-bottom: 4px solid var(--main-border);
+            padding-bottom: 10px; display: inline-block;
+        }
+
+        table {
+            width: 100%; border-collapse: collapse; 
+            font-size: 0.9rem;
+        }
+        th, td {
+            padding: 12px; border: 2px solid var(--main-border);
+            text-align: center;
+        }
+        thead tr {
+            background: var(--main-border); color: white;
+        }
+        tbody tr:nth-child(even) { background: #f9f9f9; }
+
+        /* ランクの文字色 (テーブル内) */
+        .table-rank-s { color: #f1c40f; font-weight: bold; text-shadow: 1px 1px 0 #000; }
+
+        /* === 戻るボタン === */
+        .btn-home {
+            display: inline-block;
+            background: var(--main-border); color: white;
+            border: 4px solid var(--main-border);
+            padding: 15px 40px; text-decoration: none;
+            font-weight: bold; font-size: 1rem;
+            box-shadow: 6px 6px 0px rgba(0,0,0,0.3);
+            transition: all 0.1s;
+            font-family: "Press Start 2P", monospace;
+        }
+        .btn-home:hover {
+            background: var(--accent-red); /* ホバーで赤く */
+            border-color: var(--accent-red);
+            transform: translate(2px, 2px);
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.3);
+        }
+
+        /* アニメーション: 結果がドーンと出る感じ */
+        .pop-in { animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.5); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <nav th:replace="~{fragments/header :: part}"></nav>
+
+    <div class="container">
+        
+        <div class="page-header">
+            <h1 class="page-title">RESULT</h1>
+        </div>
+        
+        <div class="result-card pop-in">
+            <div class="rank-label">YOUR RANK</div>
+            
+            <h1 class="rank-grade" 
+                th:classappend="'rank-' + ${myRank}" 
+                th:text="${myRank}">S</h1>
+            
+            <div class="score-info">
+                SCORE: <span class="score-value" th:text="${myScore}">1200</span>
+                <div class="sub-info">
+                    (正解数: <span th:text="${correctCount}"></span>問)
+                </div>
+            </div>
+        </div>
+
+        <div class="ranking-section">
+            <h3 class="ranking-title">
+                <i class="px px-trophy"></i> TOP 10 PLAYERS
+            </h3>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>RANK</th>
+                        <th>GRADE</th>
+                        <th>SCORE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="rec, stat : ${ranking}">
+                        <td>
+                            <span th:if="${stat.count == 1}">🥇</span>
+                            <span th:if="${stat.count == 2}">🥈</span>
+                            <span th:if="${stat.count == 3}">🥉</span>
+                            <span th:text="${stat.count} + '位'"></span>
+                        </td>
+                        <td th:text="${rec.rankGrade}" 
+                            th:classappend="'rank-' + ${rec.rankGrade}"
+                            style="font-weight:bold;">S</td>
+                        <td th:text="${rec.score}">1500</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <a th:href="@{/mypage}" class="btn-home">マイページへ戻る</a>
+    </div>
+
+</body>
+</html>

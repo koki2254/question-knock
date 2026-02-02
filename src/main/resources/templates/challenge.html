@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>100本ノック & AI先生</title>
+
+<style>
+    /* --- 全体レイアウト --- */
+    body { font-family: "Segoe UI", sans-serif; background: #f5f5f5; margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; }
+    /* もしヘッダーを入れるなら padding-top: 80px; が必要です */
+    
+    .main-wrapper { display: flex; flex: 1; height: 100%; overflow: hidden; }
+
+    /* 左側：クイズエリア */
+    .quiz-area { flex: 2; padding: 20px; overflow-y: auto; background-color: #f5f5f5; }
+    .quiz-container { max-width: 800px; background: #fff; margin: 0 auto; padding: 25px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+    /* 右側：AIチャットエリア */
+    .ai-area { flex: 1; background-color: #fff; border-left: 1px solid #ddd; display: none; flex-direction: column; padding: 1rem; box-shadow: -2px 0 5px rgba(0,0,0,0.05); }
+	/* ボタンを右寄せにするためのスタイルを追加 */
+	.btn-toggle-ai {
+	    margin-left: auto;
+	    margin-right: 10px;
+	}
+	
+    /* --- AIチャット UI --- */
+    .ai-header { display: none; font-weight: bold; color: #555; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+    .ai-icon { font-size: 1.5rem; }
+    /* クラスによる制御用 */
+	.ai-hidden {
+	    display: none !important;
+	}
+    
+    .chat-history { flex: 1; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; padding: 10px; background-color: #fafafa; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; }
+    
+    .message { padding: 8px 12px; border-radius: 12px; max-width: 90%; font-size: 0.9rem; line-height: 1.4; word-wrap: break-word; }
+    .message.user { align-self: flex-end; background-color: #007bff; color: white; border-bottom-right-radius: 2px; }
+    .message.ai { align-self: flex-start; background-color: #e9ecef; color: #333; border-bottom-left-radius: 2px; }
+    
+    /* 画像プレビュー */
+    .message img { max-width: 100%; border-radius: 8px; margin-top: 5px; }
+    
+    .chat-input-container { border-top: 1px solid #eee; padding-top: 10px; }
+    
+    /* プレビューエリア (送信前) */
+    #image-preview-area { display: none; margin-bottom: 5px; position: relative; width: fit-content; }
+    #image-preview-area img { max-height: 80px; border-radius: 5px; border: 1px solid #ddd; }
+    #remove-image-btn { position: absolute; top: -5px; right: -5px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+    .chat-input-area { display: flex; gap: 5px; align-items: center; }
+    .chat-input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 20px; outline: none; }
+    
+    /* 画像選択ボタン (SVG配置用に調整) */
+    .btn-attach { 
+        background: none; 
+        border: none; 
+        cursor: pointer; 
+        color: #666; 
+        padding: 5px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.2s;
+    }
+    .btn-attach:hover { color: #007bff; }
+    
+    .btn-send { background-color: #007bff; color: white; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; }
+    .btn-send:hover { background-color: #0056b3; }
+    .btn-send:disabled { background-color: #ccc; cursor: not-allowed; }
+
+    /* --- クイズスタイル --- */
+    /* ▼▼▼ 追加したスタイル ▼▼▼ */
+    .question-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .btn-bookmark { background: none; border: none; cursor: pointer; font-size: 1.2rem; color: #ccc; transition: 0.3s; }
+    .btn-bookmark:hover { color: #ffd700; }
+    /* ▲▲▲ 追加ここまで ▲▲▲ */
+
+    .choice-row { display: flex; align-items: center; gap: 15px; margin-bottom: 12px; }
+    .choice-btn { width: 55px; text-align: center; padding: 12px; border-radius: 8px; font-size: 1.2rem; border: 1px solid #ccc; cursor: pointer; transition: all .2s; background: #fafafa; flex-shrink: 0; }
+    .choice-btn:hover { background: #e4edf7; }
+    .choice-text { font-size: 1.1rem; line-height: 1.5; }
+    .correct-answer { background: #d4edda !important; border-color: #28a745 !important; }
+    .wrong-answer { background: #f8d7da !important; border-color: #dc3545 !important; }
+    .navigation { margin-top: 20px; text-align: right; }
+    .btn-next, .btn-submit { padding: 12px 28px; border-radius: 6px; border: none; display: none; color: white; cursor: pointer; }
+    .btn-next { background: #007bff; } .btn-next:hover { background: #0056b3; }
+    .btn-submit { background: #28a745; } .btn-submit:hover { background: #218838; }
+    .question-box { display: none; } .question-box.active { display: block; }
+    .question-image { max-width: 100%; height: auto; margin: 10px 0; border-radius: 5px; }
+    .judge-box { display: none; margin-top: 12px; padding: 10px 15px; border-radius: 6px; font-size: 1.2rem; font-weight: bold; }
+    .judge-correct { background: #d4edda; color: #155724; }
+    .judge-wrong { background: #f8d7da; color: #721c24; }
+    .explanation-box { display: none; margin-top: 15px; padding: 15px; background: #fdfdfd; border: 1px solid #eee; border-radius: 6px; text-align: left; }
+</style>
+</head>
+
+<body>
+
+<div class="main-wrapper">
+
+    <div class="quiz-area">
+        <div class="quiz-container">
+            <h1>100本ノック</h1>
+            
+            <div th:if="${questions == null or questions.isEmpty()}" style="color: red; padding: 20px; border: 2px solid red;">
+                <h3>⚠️ データがありません</h3>
+                <p>コントローラーから渡された "questions" リストが空です。</p>
+                <p>データベースに問題が登録されているか、Repositoryの検索条件が正しいか確認してください。</p>
+            </div>
+            
+            <form id="quizForm" th:action="@{/challenge/submit}" method="post" th:object="${questions}">
+                <div th:each="q, iterStat : ${questions}"
+                     th:id="'q-container-' + ${iterStat.index}"
+                     class="question-box"
+                     th:classappend="${iterStat.index == 0} ? ' active' : ''">
+
+<!--                    <input type="hidden" class="hidden-question-text" th:value="${q.questionText}" />-->
+<!--	                    <button type="button" class="btn-toggle-ai active" onclick="toggleAITeacher()" id="aiToggleBtn">-->
+<!--						    AI先生を表示-->
+<!--						</button>-->
+                    <div class="question-header">
+                        <h2 th:text="'第 ' + (${iterStat.index}+1) + ' 問'" style="margin:0;"></h2>
+                        <button type="button" class="btn-toggle-ai" onclick="toggleAITeacher()" id="aiToggleBtn">
+					        AI先生を表示
+					    </button>
+					    
+                        <button type="button" class="btn-bookmark" 
+                                th:onclick="|toggleBookmark(${q.questionId}, this)|"
+                                title="ブックマークに追加">
+                            ★ <span style="font-size:0.8rem;">後で復習</span>
+                        </button>
+                    </div>
+                    <div class="question-text" th:text="${q.questionText}"></div>
+                    <img th:if="${q.imageUrl}" th:src="@{${q.imageUrl}}" class="question-image"/>
+                    <input type="hidden" th:name="'question_' + ${q.questionId}" th:id="'hidden-answer-' + ${iterStat.index}" />
+                    
+                    <input type="hidden" name="startTime" id="startTimeInput">
+
+                    <script>
+                        // 画面を開いた瞬間の時間を記録
+                        const loadTime = Date.now();
+                        
+                        // 送信ボタンを押すときに、セットする
+                        document.querySelector('form').addEventListener('submit', function() {
+                            const input = document.getElementById('startTimeInput');
+                            if(input) input.value = loadTime;
+                        });
+                    </script>
+
+                    <div class="choices">
+                        <div class="choice-row" th:each="choice, cStat : ${q.choices}">
+                            <button type="button"
+                                    class="choice-btn"
+                                    th:text="${labels != null ? labels[cStat.index] : cStat.index + 1}"
+                                    th:data-choice-id="${choice.choiceId}"
+                                    th:data-correct="${choice.isCorrect}"
+                                    th:data-explanation="${q.explanation}"
+                                    th:onclick="|selectAnswer(this, ${iterStat.index})|">
+                            </button>
+                            <img th:if="${choice.imageUrl != null}" th:src="@{${choice.imageUrl}}" 
+                            style="max-width:200px; max-height:200px;" />
+                            <div class="choice-text" th:text="${choice.choiceText}"></div>
+                        </div>
+                    </div>
+
+                    <div class="judge-box" th:id="'judge-' + ${iterStat.index}"></div>
+                    <div class="explanation-box" th:id="'exp-' + ${iterStat.index}">
+                        <h3>解説</h3>
+                        <p class="explanation-text"></p>
+                    </div>
+
+                    <div class="navigation">
+						<button type="button" class="save-btn" onclick="saveAndQuit()" 
+					            style="background:#6c757d; color:white; padding:12px 20px; border-radius:6px; border:none; cursor:pointer;">
+					        一時保存して中断
+					    </button>
+					    
+					    <button type="button" class="btn-next" th:onclick="'goToNextQuestion(' + (${iterStat.index} + 1) + ')'">次へ</button>
+					    <button type="submit" th:id="'submitBtn-' + ${iterStat.index}" class="btn-submit">結果を見る</button>
+					</div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="ai-area">
+        <div class="ai-header">
+            <span class="ai-icon">👨‍🏫</span>
+            <span>AI質問</span>
+        </div>
+        <div class="chat-history" id="chat-history">
+            <div class="message ai">
+                こちらはAI質問機能です。
+                分からないことがあったら質問してみてください。
+            </div>
+        </div>
+        
+        <div class="chat-input-container">
+            <div id="image-preview-area">
+                <img id="image-preview" src="" alt="preview">
+                <button id="remove-image-btn" onclick="removeImage()">×</button>
+            </div>
+
+            <div class="chat-input-area">
+                <button class="btn-attach" onclick="document.getElementById('image-input').click()" title="ファイルを添付">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <circle cx="18" cy="18" r="5" fill="white"></circle>
+                        <line x1="18" y1="15.5" x2="18" y2="20.5"></line>
+                        <line x1="15.5" y1="18" x2="20.5" y2="18"></line>
+                    </svg>
+                </button>
+                <input type="file" id="image-input" accept="image/*" style="display: none;" onchange="handleImageSelect(event)">
+                
+                <input type="text" id="user-input" class="chat-input" placeholder="質問を入力..." onkeypress="handleKeyPress(event)" />
+                <button onclick="sendMessage()" class="btn-send" id="btn-send">送信</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script th:inline="javascript"> // th:inline="javascript" を追加すると安全です
+let currentQuestionIndex = 0;
+let totalCorrectAnswers = /*[[${savedCorrectCount ?: 0}]]*/ 0; // ★再開時はここに入る
+let selectedImageBase64 = null; 
+let selectedImageMimeType = null;
+
+// --- ▼▼▼ 中断・再開ロジック（ここに追加） ▼▼▼ ---
+window.onload = function() {
+    // Controllerから渡されたstartIndexを取得（なければ0）
+    const startIndex = /*[[${startIndex}]]*/ 0;
+    if (startIndex > 0) {
+        // 保存された問題までジャンプ
+        goToNextQuestion(startIndex);
+    }
+};
+
+function saveAndQuit() {
+    if(!confirm("現在の進捗を保存して中断しますか？")) return;
+
+    // CSRFトークンの取得（Spring Securityが自動でHTMLに埋め込んでいる値）
+    const token = document.querySelector('input[name="_csrf"]')?.value;
+
+    const params = new URLSearchParams();
+    params.append('currentIndex', currentQuestionIndex);
+    params.append('correctCount', totalCorrectAnswers); // ★現在の正解数も送る
+
+    fetch('/challenge/save_progress', {
+        method: 'POST',
+        headers: {
+            // ヘッダーにCSRFトークンをセットする
+            'X-CSRF-TOKEN': token 
+        },
+        body: params
+    })
+    .then(res => {
+        if(res.ok) {
+            alert("進捗を保存しました。トップ画面に戻ります。");
+            window.location.href = "/select-course"; 
+        } else {
+            alert("保存に失敗しました。ステータス: " + res.status);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert("通信エラーが発生しました。");
+    });
+}
+
+
+
+// --- ▼▼▼ ブックマーク機能（ここを追加） ▼▼▼ ---
+function toggleBookmark(questionId, btn) {
+    // API呼び出し
+    fetch('/api/bookmark/toggle?questionId=' + questionId, {
+        method: 'POST'
+    })
+    .then(response => {
+        // 403 Forbiddenなどのエラーハンドリング
+        if (!response.ok) throw new Error("Status: " + response.status);
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            if (data.status === 'added') {
+                btn.style.color = "#ffd700"; // 金色にする
+                btn.innerHTML = '★ <span style="font-size:0.8rem;">登録済</span>';
+            } else {
+                btn.style.color = "#ccc"; // 灰色に戻す
+                btn.innerHTML = '★ <span style="font-size:0.8rem;">後で復習</span>';
+            }
+        } else {
+            alert("ブックマークするにはログインが必要です");
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert("エラーが発生しました。ログイン状態などを確認してください。");
+    });
+}
+// --- ▲▲▲ 追加ここまで ▲▲▲ ---
+
+// --- クイズ用ロジック ---
+function selectAnswer(btn, qIndex) {
+    const questionBox = document.getElementById('q-container-' + qIndex);
+    const buttons = questionBox.querySelectorAll('.choice-btn');
+    if (questionBox.classList.contains('answered')) return;
+    questionBox.classList.add('answered');
+    
+// ★修正：現在の問題ボックスの中にある「一時保存ボタン」を探して隠す
+    const saveBtn = questionBox.querySelector('.save-btn');
+    if (saveBtn) saveBtn.style.display = 'none';
+
+    const isCorrect = btn.getAttribute('data-correct') === 'true';
+    let explanation = btn.getAttribute('data-explanation'); // データベースから取得した解説
+    const hiddenInput = document.getElementById('hidden-answer-' + qIndex);
+    if (hiddenInput) hiddenInput.value = btn.getAttribute("data-choice-id");
+
+    // 【修正ポイント1】正解のラベル（ア、イ、ウなど）を探す
+    let correctLabel = "";
+    buttons.forEach(b => {
+        b.style.pointerEvents = "none";
+        if (b.getAttribute('data-correct') === 'true') {
+            b.classList.add('correct-answer');
+            correctLabel = b.textContent.trim(); // 正解ボタンのテキストを取得
+        }
+    });
+
+    if (!isCorrect) btn.classList.add('wrong-answer');
+
+    const judgeBox = document.getElementById('judge-' + qIndex);
+    judgeBox.style.display = "block";
+    if (isCorrect) { 
+        judgeBox.textContent = "○ 正解！"; 
+        judgeBox.classList.add("judge-correct"); 
+        totalCorrectAnswers++;
+    } else { 
+        judgeBox.textContent = "× 不正解"; 
+        judgeBox.classList.add("judge-wrong"); 
+    }
+
+    const expBox = document.getElementById('exp-' + qIndex);
+    const expTextElement = expBox.querySelector(".explanation-text");
+
+    // --- 解説文の組み立て ---
+    let finalMessage = "";
+
+    // 1. 解説データがあるかチェック
+    if (explanation && explanation !== 'null' && explanation.trim() !== '') {
+        finalMessage = explanation.trim();
+        // 句点（。）がなければ補完
+        if (!finalMessage.endsWith("。")) {
+            finalMessage += "。";
+        }
+    } 
+    // 3. 最後に「よって、正解は～」を合体させて表示
+    expTextElement.textContent = finalMessage + " よって、正解は「" + correctLabel + "」です。";
+
+    expBox.style.display = "block";
+    
+    // ナビゲーションボタンの表示制御
+    const nextBtn = questionBox.querySelector('.btn-next');
+    const submitBtn = document.getElementById('submitBtn-' + qIndex);
+    const totalQuestions = document.querySelectorAll('.question-box').length;
+    if (qIndex === totalQuestions - 1) {
+        if (nextBtn) nextBtn.style.display = "none";
+        if (submitBtn) submitBtn.style.display = "inline-block";
+    } else {
+        if (nextBtn) nextBtn.style.display = "inline-block";
+        if (submitBtn) submitBtn.style.display = "none";
+    }
+}
+
+function goToNextQuestion(nextIndex) {
+    const currentBox = document.getElementById('q-container-' + currentQuestionIndex);
+    if (currentBox) currentBox.classList.remove('active');
+    
+    const nextBox = document.getElementById('q-container-' + nextIndex);
+    if (nextBox) {
+        nextBox.classList.add('active');
+        currentQuestionIndex = nextIndex;
+
+        // ★修正：次に表示する問題ボックスの中にある「一時保存ボタン」を表示する
+        const saveBtn = nextBox.querySelector('.save-btn');
+        if (saveBtn) saveBtn.style.display = 'inline-block';
+    }
+}
+
+// --- AIチャット & 画像処理用ロジック ---
+function handleKeyPress(event) {
+    if (event.key === 'Enter') sendMessage();
+}
+
+function toggleAITeacher() {
+    const aiArea = document.querySelector('.ai-area');
+    const toggleBtn = document.getElementById('aiToggleBtn');
+    
+    // 現在非表示（ai-hiddenクラスがある、またはstyleで非表示）の場合
+    const isHidden = aiArea.classList.contains('ai-hidden') || getComputedStyle(aiArea).display === 'none';
+
+    if (isHidden) {
+        // 表示する処理
+        aiArea.style.display = 'flex'; // display:noneを上書き
+        aiArea.classList.remove('ai-hidden');
+        toggleBtn.innerText = "AI先生を隠す";
+        toggleBtn.classList.remove('active');
+    } else {
+        // 隠す処理
+        aiArea.style.display = 'none';
+        aiArea.classList.add('ai-hidden');
+        toggleBtn.innerText = "AI先生を表示";
+        toggleBtn.classList.add('active');
+    }
+}
+
+// 画像が選択された時の処理
+function handleImageSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('image-preview').src = e.target.result;
+        document.getElementById('image-preview-area').style.display = 'block';
+        
+        const result = e.target.result;
+        selectedImageMimeType = result.split(';')[0].split(':')[1];
+        selectedImageBase64 = result.split(',')[1];
+    };
+    reader.readAsDataURL(file);
+}
+
+// 画像選択の解除
+function removeImage() {
+    document.getElementById('image-input').value = '';
+    document.getElementById('image-preview-area').style.display = 'none';
+    selectedImageBase64 = null;
+    selectedImageMimeType = null;
+}
+
+async function sendMessage() {
+    const inputField = document.getElementById('user-input');
+    const message = inputField.value.trim();
+    
+    if (!message && !selectedImageBase64) return;
+
+    addMessage(message, 'user', selectedImageBase64 ? document.getElementById('image-preview').src : null);
+    
+    inputField.value = '';
+    const currentImageBase64 = selectedImageBase64; 
+    const currentMimeType = selectedImageMimeType;
+    removeImage(); 
+    
+    const sendBtn = document.getElementById('btn-send');
+    sendBtn.disabled = true;
+    sendBtn.innerText = '...';
+
+    const currentBox = document.getElementById('q-container-' + currentQuestionIndex);
+    const questionText = currentBox.querySelector('.hidden-question-text').value;
+
+    try {
+        const response = await fetch('/api/ai/ask', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                questionText: questionText,
+                userMessage: message,
+                imageBase64: currentImageBase64, 
+                mimeType: currentMimeType
+            })
+        });
+
+        if (!response.ok) throw new Error('Network response was not ok');
+        
+        const data = await response.json();
+        addMessage(data.response, 'ai');
+
+    } catch (error) {
+        console.error('Error:', error);
+        addMessage('エラーが発生しました。もう一度お試しください。', 'ai');
+    } finally {
+        sendBtn.disabled = false;
+        sendBtn.innerText = '送信';
+    }
+}
+
+function addMessage(text, sender, imageUrl = null) {
+    const historyDiv = document.getElementById('chat-history');
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `message ${sender}`;
+    
+    if (imageUrl) {
+        const img = document.createElement('img');
+        img.src = imageUrl;
+        msgDiv.appendChild(img);
+        if (text) msgDiv.appendChild(document.createElement('br')); 
+    }
+    
+    if (text) {
+        const textNode = document.createTextNode(text);
+        msgDiv.appendChild(textNode);
+    }
+    
+    historyDiv.appendChild(msgDiv);
+    historyDiv.scrollTop = historyDiv.scrollHeight;
+}
+</script>
+
+</body>
+</html>

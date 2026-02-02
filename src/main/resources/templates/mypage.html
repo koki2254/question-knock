@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>学習分析 - Question Knock</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <th:block th:replace="~{fragments/header :: style}"></th:block>
+    <link href="https://unpkg.com/pixelarticons@1.8.1/pixelarticons.css" rel="stylesheet">
+
+    <style>
+        /* === 配色定義 === */
+        :root {
+            --bg-color: #fecd1a;      /* 中黄 */
+            --main-border: #1e2749;   /* 藍色 */
+            --accent-white: #ffffff;  /* 白 */
+            --accent-red: #e73228;    /* 赤 */
+            --shadow-color: #1e2749;  /* 影 */
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: none;
+            font-family: "Press Start 2P", "DotGothic16", monospace;
+            color: var(--main-border);
+            padding-top: 110px; /* ヘッダー + 余白 */
+            padding-bottom: 60px;
+            text-align: center;
+        }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
+
+        /* === タイトルエリア === */
+        .page-header { margin-bottom: 40px; }
+        .page-title {
+            font-size: 2.5rem; margin-bottom: 10px; font-weight: bold;
+            text-shadow: none;
+        }
+
+        /* === ピクセルカード (全体枠) === */
+        .pixel-box {
+            background: var(--accent-white);
+            border: 4px solid var(--main-border);
+            box-shadow: 6px 6px 0px var(--shadow-color);
+            padding: 30px;
+            text-align: left;
+            position: relative;
+        }
+
+        /* ユーザー情報 */
+        .user-info {
+            text-align: center; font-size: 1.2rem; margin-bottom: 30px;
+            padding-bottom: 20px; border-bottom: 4px dashed #ddd;
+        }
+        /* ★修正: ユーザー名を黒色に変更 */
+        .user-name-highlight { 
+            color: #000000; 
+            font-weight: bold; 
+        }
+
+        /* === 横並びレイアウト === */
+        .dashboard-row {
+            display: flex; gap: 40px; align-items: flex-start;
+        }
+
+        /* 左カラム (学習時間) */
+        .left-col {
+            flex: 1; min-width: 350px;
+        }
+        /* 右カラム (グラフ) */
+        .right-col {
+            flex: 1.5; min-width: 350px;
+        }
+
+        /* サブタイトル */
+        h3 {
+            border-bottom: 4px solid var(--main-border);
+            padding-bottom: 10px; margin-top: 0; margin-bottom: 20px;
+            font-size: 1.2rem; display: flex; align-items: center; gap: 10px;
+        }
+
+        /* === テーブル (ピクセル風) === */
+        table {
+            width: 100%; border-collapse: collapse; margin-top: 10px;
+            font-size: 0.95rem;
+        }
+        th, td {
+            padding: 12px; border: 2px solid var(--main-border);
+        }
+        thead tr {
+            background: var(--main-border); color: white;
+        }
+        tbody tr:nth-child(even) { background: #f9f9f9; }
+        .time-cell { font-weight: bold; color: #007bff; text-align: right; }
+
+        /* === グラフ操作エリア === */
+        .control-section {
+            background: #eee;
+            border: 2px solid var(--main-border);
+            padding: 15px; margin-bottom: 20px;
+            text-align: center;
+        }
+        .control-group { margin-bottom: 10px; }
+        .control-group:last-child { margin-bottom: 0; }
+        
+        .label-text { font-size: 0.9rem; margin-right: 10px; font-weight: bold; }
+
+        /* === 切り替えボタン (ピクセル風) === */
+        .btn-switch {
+            display: inline-block;
+            background: var(--accent-white);
+            color: var(--main-border);
+            border: 2px solid var(--main-border);
+            padding: 5px 15px;
+            margin: 0 2px;
+            cursor: pointer;
+            font-family: inherit; font-size: 0.85rem;
+            box-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+            transition: all 0.1s;
+        }
+        /* ★修正: ホバー時に枠と文字を赤く */
+        .btn-switch:hover {
+            transform: translate(1px, 1px);
+            box-shadow: 1px 1px 0px rgba(0,0,0,0.2);
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+        }
+        .btn-switch.active {
+            background: var(--main-border);
+            color: white;
+            box-shadow: none;
+            transform: translate(2px, 2px);
+        }
+        /* ★修正: アクティブ時のホバーは赤背景に */
+        .btn-switch.active:hover {
+            background: var(--accent-red);
+            border-color: var(--accent-red);
+            color: white;
+        }
+
+        /* グラフコンテナ */
+        .chart-container {
+            position: relative; height: 350px; width: 100%;
+            background: white; border: 2px solid var(--main-border);
+            padding: 10px;
+        }
+
+        /* 戻るボタン */
+        .btn-back {
+            display: inline-block; margin-top: 40px;
+            background: var(--main-border); color: white;
+            border: 4px solid var(--main-border);
+            padding: 15px 40px; text-decoration: none;
+            font-weight: bold; font-size: 1rem;
+            box-shadow: 6px 6px 0px rgba(0,0,0,0.3);
+            transition: all 0.1s;
+        }
+        /* ★修正: ホバー時に背景を赤く */
+        .btn-back:hover {
+            background: var(--accent-red);
+            border-color: var(--accent-red);
+            transform: translate(2px, 2px);
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.3);
+        }
+
+        /* レスポンシブ */
+        @media (max-width: 900px) {
+            .dashboard-row { flex-direction: column; }
+            .left-col, .right-col { width: 100%; min-width: auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav th:replace="~{fragments/header :: part}"></nav>
+
+    <div class="container">
+        
+        <div class="page-header">
+            <h1 class="page-title"><i class="px px-chart-bar"></i> 学習分析</h1>
+        </div>
+
+        <div class="pixel-box">
+            
+            <p class="user-info">
+                <span class="user-name-highlight" th:text="${userName}">ユーザー</span> さんの学習記録
+            </p>
+
+            <div class="dashboard-row">
+                
+                <div class="left-col">
+                    <h3><i class="px px-clock"></i> 分野別 学習時間</h3>
+                    
+                    <div th:if="${studyTimeList == null or studyTimeList.isEmpty()}" 
+                         style="color: #666; padding: 20px; text-align: center; border: 2px dashed #ccc;">
+                        まだ記録がありません
+                    </div>
+
+                    <table th:if="${studyTimeList != null and !studyTimeList.isEmpty()}">
+                        <thead>
+                            <tr>
+                                <th>分野</th>
+                                <th>TIME</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:each="row : ${studyTimeList}" th:if="${row != null}">
+                                <td th:text="${row[0] != null ? row[0] : '(不明)'}">セキュリティ</td>
+                                <td class="time-cell">
+                                    <span th:if="${row[1] != null}"
+                                          th:with="totalSec=${row[1]},
+                                                   hours=${totalSec / 3600},
+                                                   minutes=${(totalSec % 3600) / 60},
+                                                   seconds=${totalSec % 60}">
+                                        <span th:if="${hours > 0}" th:text="${hours} + 'h '"></span>
+                                        <span th:if="${hours > 0 or minutes > 0}" th:text="${minutes} + 'm '"></span>
+                                        <span th:text="${seconds} + 's'"></span>
+                                    </span>
+                                    <span th:if="${row[1] == null}">0s</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="right-col">
+                    <h3><i class="px px-trending-up"></i> 正答率チャート</h3>
+
+                    <div class="control-section">
+                        <div class="control-group">
+                            <span class="label-text">区分:</span>
+                            <button class="btn-switch active" onclick="changeExamType('基本', this)">基本</button>
+                            <button class="btn-switch" onclick="changeExamType('応用', this)">応用</button>
+                        </div>
+                        <div class="control-group">
+                            <span class="label-text">形式:</span>
+                            <button class="btn-switch active" onclick="changeGraphType('line', this)">折れ線</button>
+                            <button class="btn-switch" onclick="changeGraphType('radar', this)">レーダー</button>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <canvas id="accuracyChart"></canvas>
+                    </div>
+                    
+                    <p id="no-data-msg" style="display:none; color:#666; margin-top: 20px; text-align: center;">
+                        データ不足のためグラフを表示できません。<br>まずは問題を解いてみましょう！
+                    </p>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let myChart = null;
+        let currentData = null;
+        let currentExamType = '基本';
+        let currentGraphType = 'line';
+
+        document.addEventListener("DOMContentLoaded", function() {
+            fetchDataAndDraw(currentExamType);
+        });
+
+        function changeExamType(type, btn) {
+            if (currentExamType === type) return; 
+            const parent = btn.parentElement;
+            parent.querySelectorAll('.btn-switch').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            currentExamType = type;
+            fetchDataAndDraw(type);
+        }
+
+        function changeGraphType(type, btn) {
+            if (currentGraphType === type) return;
+            const parent = btn.parentElement;
+            parent.querySelectorAll('.btn-switch').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            currentGraphType = type;
+            if (currentData) drawChart(currentData);
+        }
+
+        async function fetchDataAndDraw(examType) {
+            try {
+                const response = await fetch(`/api/stats/accuracy?examType=${encodeURIComponent(examType)}`);
+                if (!response.ok) throw new Error('API request failed');
+                const data = await response.json();
+                currentData = data;
+                drawChart(data);
+            } catch (error) {
+                console.error('データ取得エラー:', error);
+            }
+        }
+
+        function drawChart(data) {
+            const hasData = data.labels && data.labels.length > 0;
+            document.getElementById('no-data-msg').style.display = hasData ? 'none' : 'block';
+            document.getElementById('accuracyChart').style.display = hasData ? 'block' : 'none';
+
+            if (myChart) myChart.destroy();
+            if (!hasData) return;
+
+            const ctx = document.getElementById('accuracyChart').getContext('2d');
+            const colorRGB = currentExamType === '基本' ? '30, 39, 73' : '46, 204, 113';
+
+            let chartConfig = {
+                type: currentGraphType,
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: `正答率 (%) - ${currentExamType}`,
+                        data: data.data,
+                        borderColor: `rgba(${colorRGB}, 1)`,
+                        backgroundColor: `rgba(${colorRGB}, 0.2)`,
+                        borderWidth: 2,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: `rgba(${colorRGB}, 1)`,
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        fill: true,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { 
+                            position: 'bottom',
+                            labels: { font: { family: "'DotGothic16', monospace" } }
+                        } 
+                    },
+                    scales: {}
+                }
+            };
+
+            const fontConfig = { family: "'DotGothic16', monospace", size: 12 };
+
+            if (currentGraphType === 'line') {
+                chartConfig.options.scales = {
+                    y: { 
+                        beginAtZero: true, max: 100, 
+                        title: { display: true, text: '正答率 (%)', font: fontConfig },
+                        ticks: { font: fontConfig }
+                    },
+                    x: { 
+                        title: { display: true, text: '分野', font: fontConfig },
+                        ticks: { font: fontConfig }
+                    }
+                };
+            } else {
+                chartConfig.options.scales = {
+                    r: { 
+                        beginAtZero: true, max: 100, 
+                        ticks: { stepSize: 20, backdropColor: 'transparent', font: { size: 10 } }, 
+                        pointLabels: { font: fontConfig } 
+                    }
+                };
+            }
+            myChart = new Chart(ctx, chartConfig);
+        }
+    </script>
+
+</body>
+</html>

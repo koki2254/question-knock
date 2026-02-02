@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>問題一覧</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>問題一覧</h1>
+
+    <table border="1">
+    <tr>
+        <th>ID</th>
+        <th>試験種</th>
+        <th>年度</th>
+        <th>季節</th>
+        <th>タグID</th>
+        <th>問題番号</th>
+        <th>問題文</th>
+    </tr>
+
+    <tr th:each="q : ${questions}">
+        <td th:text="${q.questionId}"></td>
+        <td th:text="${q.examType}"></td>
+        <td th:text="${q.year}"></td>
+        <td th:text="${q.season}"></td>
+        <td th:text="${q.tagId}"></td>
+        <td th:text="${q.questionNumber}"></td>
+        <td th:text="${q.questionText}"></td>
+    </tr>
+</table>
+
+
+</body>
+</html>

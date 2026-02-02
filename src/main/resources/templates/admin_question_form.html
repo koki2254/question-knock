@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>新規問題 登録（画像付き選択肢対応）</title>
+    <style>
+        body { font-family: sans-serif; padding: 2rem; background-color: #f9f9f9; }
+        .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        form { display: grid; grid-template-columns: 150px 1fr; gap: 1rem; align-items: start; }
+        label { text-align: right; font-weight: bold; padding-top: 0.7rem; }
+        input[type="text"], textarea, select, input[type="number"] { width: 95%; padding: 0.7rem; border-radius: 4px; border: 1px solid #ccc; }
+        textarea { height: 100px; resize: vertical; }
+        .choice-row { display: flex; flex-direction: column; gap: 5px; padding: 10px; margin-bottom: 10px; background: #f0f0f0; border-radius: 6px; }
+        .choice-header { display: flex; align-items: center; gap: 10px; }
+        .choice-label { font-weight: bold; font-size: 1.1rem; width: 25px; }
+        .btn { background-color: #28a745; color: white; padding: 10px 20px; border-radius: 4px; border: none; cursor: pointer; }
+        .btn-remove { background: #dc3545; color: #fff; border: none; padding: 4px 10px; border-radius: 4px; }
+        .btn-add-choice { background: #007bff; color: white; padding: 7px 15px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>新規問題登録</h1>
+
+    <form th:action="@{/admin/questions/add}" method="post" th:object="${question}" enctype="multipart/form-data">
+
+        <label>試験区分:</label>
+		<select id="combinedExamSelect" required onchange="splitExamData()">
+		    <option value="">-- 試験区分を選択 --</option>
+		    <option value="基本,午前">基本情報技術者 - 午前</option>
+		    <option value="基本,午後">基本情報技術者 - 午後</option>
+		    <option value="応用,午前">応用情報技術者 - 午前</option>
+		    <option value="応用,午後">応用情報技術者 - 午後</option>
+		</select>
+		
+		<!-- 実際に送信される値 -->
+		<input type="hidden" th:field="*{examCategory}" id="hiddenExamCategory">
+		<input type="hidden" th:field="*{examSession}" id="hiddenExamSession">
+
+
+        <label>年号:</label>
+        <input type="number" th:field="*{year}" required>
+
+        <label>時期:</label>
+        <select th:field="*{season}" required>
+            <option value="">-- 選択 --</option>
+            <option value="春">春期</option>
+            <option value="秋">秋期</option>
+        </select>
+
+        <label>問題番号:</label>
+        <input type="number" th:field="*{questionNumber}" required>
+
+        <label>分野(タグ):</label>
+        <select th:field="*{tagId}" required>
+            <option th:each="tag : ${allTags}" th:value="${tag.tagId}" th:text="${tag.tagName}"></option>
+        </select>
+
+        <label>問題文:</label>
+        <textarea th:field="*{questionText}" required></textarea>
+
+        <label>画像:</label>
+        <input type="file" name="imageFile" accept="image/*"/>
+
+        <!-- 選択肢 -->
+        <label>選択肢:</label>
+        <div id="choices-container"></div>
+
+        <label></label>
+        <button type="button" id="add-choice-btn" class="btn-add-choice">+ 選択肢追加</button>
+
+        <label>解説:</label>
+        <textarea th:field="*{explanation}"></textarea>
+
+        <label></label>
+        <button class="btn" type="submit" onclick="return validateExam()">登録する</button>
+    </form>
+
+    <br>
+    <a href="/admin/dashboard">
+        <button class="btn" type="button" style="background:#2ecc71;">ダッシュボードに戻る</button>
+    </a>
+</div>
+
+<script>
+function splitExamData() {
+    const selectBox = document.getElementById('combinedExamSelect');
+    const hiddenCategory = document.getElementById('hiddenExamCategory');
+    const hiddenSession = document.getElementById('hiddenExamSession');
+
+    const val = selectBox.value; // "基本,午前" など
+
+    if (val) {
+        const parts = val.split(',');
+        hiddenCategory.value = parts[0]; // 基本 / 応用
+        hiddenSession.value = parts[1];  // 午前 / 午後
+    } else {
+        hiddenCategory.value = "";
+        hiddenSession.value = "";
+    }
+}
+
+function validateExam() {
+    const category = document.getElementById('hiddenExamCategory').value;
+    const session = document.getElementById('hiddenExamSession').value;
+
+    if (!category || !session) {
+        alert("試験区分（基本/応用・午前/午後）を選択してください");
+        return false;
+    }
+    return true;
+}
+
+//選択肢
+document.addEventListener("DOMContentLoaded", () => {
+    const container = document.getElementById("choices-container");
+    const addBtn = document.getElementById("add-choice-btn");
+    const labels = ["ア", "イ", "ウ", "エ", "オ", "カ", "キ"];
+
+    function updateIndexes() {
+        const rows = container.children;
+        for (let i = 0; i < rows.length; i++) {
+            rows[i].querySelector(".choice-label").innerText = labels[i];
+            rows[i].querySelector(".choice-radio").value = i;
+            rows[i].querySelector(".choice-text").placeholder = labels[i] + " の選択肢";
+        }
+    }
+
+    function createChoiceRow(index) {
+        const row = document.createElement("div");
+        row.className = "choice-row";
+
+        row.innerHTML = `
+            <div class="choice-header">
+                <div class="choice-label">${labels[index]}</div>
+                <input type="radio" class="choice-radio" name="isCorrect" value="${index}" ${index===0?'checked':''}>
+                <button type="button" class="btn-remove">削除</button>
+            </div>
+            <input type="text" class="choice-text" name="choiceTexts" placeholder="${labels[index]} の選択肢">
+            <div>
+                <label style="font-weight:bold;">画像:</label><br>
+                <input type="file" name="choiceImageFiles" accept="image/*">
+            </div>
+        `;
+
+        row.querySelector(".btn-remove").onclick = () => {
+            row.remove();
+            updateIndexes();
+        };
+
+        return row;
+    }
+
+    addBtn.addEventListener("click", () => {
+        container.appendChild(createChoiceRow(container.children.length));
+        updateIndexes();
+    });
+
+    // 初期4つの選択肢を追加
+    for (let i = 0; i < 4; i++) addBtn.click();
+});
+</script>
+</body>
+</html>

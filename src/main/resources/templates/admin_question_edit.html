@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>問題編集</title>
+
+    <style>
+        body { font-family: sans-serif; padding: 2rem; background-color: #f9f9f9; }
+        .container {
+            max-width: 900px; margin: 0 auto; background: #fff; padding: 2rem;
+            border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        form { display: grid; grid-template-columns: 150px 1fr; gap: 1rem; }
+        label { text-align: right; font-weight: bold; padding-top: .7rem; }
+        input[type="text"], textarea, select, input[type="number"] {
+            width: 95%; padding: .7rem; border-radius: 4px; border: 1px solid #ccc;
+        }
+        textarea { height: 100px; resize: vertical; }
+
+        .choice-row {
+            padding: 10px;
+            background: #f0f0f0;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .choice-header { display: flex; gap: 10px; align-items: center; }
+        .choice-label { font-weight: bold; font-size: 1.1rem; width: 25px; }
+        .btn { background-color: #28a745; color: #fff; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-remove { background: #dc3545; color: #fff; padding: 4px 10px; border-radius: 4px; }
+        .btn-add-choice { background: #007bff; color: #fff; padding: 7px 15px; border-radius: 4px; }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <h1>問題編集</h1>
+
+    <form th:action="@{/admin/questions/update/{id}(id=${question.questionId})}"
+          method="post" th:object="${question}" enctype="multipart/form-data">
+
+        <label>ID:</label>
+        <input type="text" th:field="*{questionId}" readonly />
+
+        <label>試験区分:</label>
+		<select id="combinedExamSelect" required onchange="splitExamData()">
+		    <option value="">-- 選択 --</option>
+		
+		    <optgroup label="基本情報技術者">
+		        <option value="基本,午前">基本情報技術者 - 午前</option>
+		        <option value="基本,午後">基本情報技術者 - 午後</option>
+		    </optgroup>
+		
+		    <optgroup label="応用情報技術者">
+		        <option value="応用,午前">応用情報技術者 - 午前</option>
+		        <option value="応用,午後">応用情報技術者 - 午後</option>
+		    </optgroup>
+		</select>
+		
+		<!-- 実際に送信される値 -->
+		<input type="hidden" th:field="*{examCategory}" id="hiddenExamCategory">
+		<input type="hidden" th:field="*{examSession}" id="hiddenExamSession">
+
+        <label>年号:</label>
+        <input type="number" th:field="*{year}" required />
+
+        <label>季節:</label>
+        <select th:field="*{season}" required>
+            <option value="">-- 選択 --</option>
+            <option value="春">春期</option>
+            <option value="秋">秋期</option>
+        </select>
+
+        <label>問題番号:</label>
+        <input type="number" th:field="*{questionNumber}" required />
+
+        <label>タグ:</label>
+        <select th:field="*{tagId}" required>
+            <option value="">-- 選択 --</option>
+            <option th:each="tag : ${allTags}" th:value="${tag.tagId}" th:text="${tag.tagName}"></option>
+        </select>
+
+        <label>問題文:</label>
+        <textarea th:field="*{questionText}" required></textarea>
+
+        <label>現在の画像:</label>
+        <div>
+            <img th:if="${question.imageUrl != null}" th:src="@{${question.imageUrl}}" style="max-width:200px;">
+        </div>
+
+        <label>画像変更:</label>
+        <input type="file" name="imageFile" accept="image/*" />
+
+        <!-- ---- 選択肢（編集用） ---- -->
+        <label>選択肢:</label>
+        <div id="choices-container">
+
+            <div th:each="c, stat : ${choices}" class="choice-row">
+
+                <div class="choice-header">
+                    <div class="choice-label"
+                         th:text="${#strings.substring('アイウエオカキ', stat.index, stat.index+1)}"></div>
+
+                    <input type="radio" name="isCorrect"
+                           th:value="${stat.index}"
+                           th:checked="${c.correct}"
+                           required>
+
+                    <button type="button" class="btn-remove"
+                            onclick="this.parentNode.parentNode.remove(); updateIndexes();">
+                        削除
+                    </button>
+                </div>
+                
+                <input type="hidden" name="existingChoiceImageUrls" th:value="${c.imageUrl}">
+
+                <!-- テキスト（空欄OK） -->
+                <input type="text" name="choiceTexts"
+                       th:value="${c.choiceText}"
+                       th:placeholder="${#strings.substring('アイウエオカキ', stat.index, stat.index+1)} + ' の選択肢'">
+
+                <!-- 画像（既存） -->
+                <div>
+                    <span style="font-weight:bold;">現在の画像:</span><br>
+                    <img th:if="${c.imageUrl != null}" th:src="@{${c.imageUrl}}" style="max-width:150px;">
+                </div>
+
+                <!-- 画像変更用 -->
+                <div>
+                    <label style="font-weight:bold;">画像変更:</label><br>
+                    <input type="file" name="choiceImageFiles" accept="image/*">
+                </div>
+
+            </div>
+        </div>
+
+        <label></label>
+        <button type="button" id="add-choice-btn" class="btn-add-choice">+ 選択肢追加</button>
+
+        <label>解説:</label>
+        <textarea th:field="*{explanation}"></textarea>
+
+        <label></label>
+        <button class="btn" type="submit">更新する</button>
+
+    </form>
+
+    <br>
+
+    <a href="/admin/questionlist">
+        <button class="btn" type="button" style="background:#2ecc71;">一覧へ戻る</button>
+    </a>
+</div>
+
+<script>
+
+	function splitExamData() {
+	    const select = document.getElementById("combinedExamSelect");
+	    const category = document.getElementById("hiddenExamCategory");
+	    const session = document.getElementById("hiddenExamSession");
+	
+	    if (!select || !category || !session) return;
+	
+	    const val = select.value;
+	    if (val && val.includes(",")) {
+	        const parts = val.split(",");
+	        category.value = parts[0]; // 基本 / 応用
+	        session.value = parts[1];  // 午前 / 午後
+	    }
+	}
+	
+	// 編集画面を開いたとき、既存データを反映
+	document.addEventListener("DOMContentLoaded", () => {
+	    const category = document.getElementById("hiddenExamCategory")?.value;
+	    const session = document.getElementById("hiddenExamSession")?.value;
+	    const select = document.getElementById("combinedExamSelect");
+	
+	    if (category && session && select) {
+	        select.value = category + "," + session;
+	    }
+	});
+
+	
+	//選択肢
+    const labels = ["ア","イ","ウ","エ","オ","カ","キ"];
+
+    function updateIndexes() {
+        const rows = document.querySelectorAll(".choice-row");
+
+        rows.forEach((row, i) => {
+            row.querySelector(".choice-label").innerText = labels[i];
+            const radio = row.querySelector("input[type='radio']");
+            radio.value = i;
+            radio.required = true;
+            row.querySelector("input[type='text']").placeholder =
+                labels[i] + " の選択肢";
+        });
+    }
+
+    // admin_question_edit.html 内の <script> 部分
+document.getElementById("add-choice-btn").onclick = () => {
+    const container = document.getElementById("choices-container");
+    const index = container.children.length;
+
+    const div = document.createElement("div");
+    div.className = "choice-row";
+    div.innerHTML = `
+        <div class="choice-header">
+            <div class="choice-label">${labels[index]}</div>
+            <input type="radio" name="isCorrect" value="${index}" ${index === 0 ? "checked" : ""} required>
+            <button type="button" class="btn-remove" onclick="this.parentNode.parentNode.remove(); updateIndexes();">削除</button>
+        </div>
+
+        <input type="hidden" name="existingChoiceImageUrls" value="">
+
+        <input type="text" name="choiceTexts" placeholder="${labels[index]} の選択肢">
+
+        <div>
+            <label style="font-weight:bold;">画像:</label><br>
+            <input type="file" name="choiceImageFiles" accept="image/*">
+        </div>
+    `;
+
+    container.appendChild(div);
+    updateIndexes();
+};
+</script>
+
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Question Knock - Entrance</title>
+    <style>
+        body {
+            margin: 0; padding: 0; height: 100vh;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            font-family: "Segoe UI", sans-serif; position: relative;
+        }
+
+        /* === 共通スタイル === */
+        .logout-container { position: absolute; top: 20px; left: 20px; z-index: 10; }
+        .logout-btn {
+            text-decoration: none; color: #555; font-weight: bold; font-size: 0.9rem;
+            padding: 8px 15px; border: 2px solid #555; border-radius: 20px;
+            transition: 0.3s; background: rgba(255,255,255,0.5); cursor: pointer;
+        }
+        .logout-btn:hover { background: #333; color: white; border-color: #333; }
+
+        .title-box { text-align: center; margin-bottom: 60px; animation: fadeIn 1.5s ease; }
+        h1 { font-size: 4rem; margin: 0; color: #333; letter-spacing: 2px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); }
+        p { font-size: 1.2rem; color: #666; margin-top: 10px; }
+
+        .entry-btn {
+            display: inline-block; padding: 20px 80px; font-size: 2rem; font-weight: bold; color: white;
+            background: linear-gradient(45deg, #007bff, #0056b3); text-decoration: none; border-radius: 50px;
+            box-shadow: 0 10px 25px rgba(0, 123, 255, 0.4); transition: all 0.3s ease;
+            animation: bounceIn 1s ease;
+        }
+        .entry-btn:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0, 123, 255, 0.5); }
+
+        .admin-link-container { position: absolute; bottom: 20px; right: 20px; }
+        .admin-link { color: #aaa; text-decoration: none; font-size: 0.8rem; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes bounceIn { 0% { opacity: 0; transform: scale(0.3); } 100% { transform: scale(1); } }
+
+        /* === プロフィールボタン (右上) === */
+        .profile-btn-container { position: absolute; top: 20px; right: 20px; text-align: center; z-index: 10; }
+        
+        .my-icon-btn {
+            width: 70px; height: 70px; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 2.5rem; cursor: pointer;
+            border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: transform 0.2s; background: #ddd;
+            overflow: hidden; /* 画像がはみ出ないように */
+            position: relative;
+        }
+        .my-icon-btn:hover { transform: scale(1.1); }
+        
+        /* 画像表示用 */
+        .my-icon-img {
+            width: 100%; height: 100%; object-fit: cover;
+        }
+        .my-name-label { font-size: 0.8rem; font-weight: bold; color: #555; margin-top: 5px; }
+
+
+        /* === プロフィール設定モーダル === */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000; backdrop-filter: blur(5px);
+            opacity: 0; visibility: hidden; transition: 0.3s;
+        }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        
+        .profile-card {
+            background: #2d2d2d; color: white; width: 90%; max-width: 400px;
+            border-radius: 15px; padding: 30px; text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5); transform: scale(0.9); transition: 0.3s;
+            position: relative;
+        }
+        .modal-overlay.active .profile-card { transform: scale(1); }
+        .close-modal-btn { position: absolute; top: 15px; right: 15px; font-size: 1.5rem; color: #aaa; cursor: pointer; background: none; border: none; }
+        
+        .input-group { margin-bottom: 25px; text-align: left; }
+        .input-group label { display: block; font-size: 0.9rem; color: #aaa; margin-bottom: 5px; }
+        .nickname-input { width: 100%; padding: 12px; font-size: 1.1rem; border-radius: 5px; border: none; box-sizing: border-box;}
+        
+        .ok-btn { background: #00d2ff; color: #333; font-weight: bold; padding: 12px 40px; border: none; border-radius: 30px; cursor: pointer; width: 100%; transition:0.2s; }
+        .ok-btn:hover { background: #5ce1ff; }
+
+        /* アップロード関連 */
+        .file-upload-area {
+            margin-bottom: 20px;
+            display: flex; flex-direction: column; align-items: center; gap: 10px;
+        }
+        .preview-circle {
+            width: 100px; height: 100px; border-radius: 50%;
+            background: #444; border: 3px solid #00d2ff;
+            overflow: hidden; display: flex; justify-content: center; align-items: center;
+        }
+        .preview-img { width: 100%; height: 100%; object-fit: cover; }
+        .file-input { display: none; }
+        .file-select-btn {
+            background: #555; color: white; padding: 5px 15px; border-radius: 20px;
+            font-size: 0.8rem; cursor: pointer; transition: 0.2s;
+        }
+        .file-select-btn:hover { background: #777; }
+
+    </style>
+</head>
+<body>
+
+    <div class="logout-container">
+        <form th:action="@{/logout}" method="post">
+            <button type="submit" class="logout-btn">← ログアウト (アカウント切替)</button>
+        </form>
+    </div>
+
+    <div class="profile-btn-container">
+        
+        <div class="my-icon-btn" onclick="openProfileModal()">
+            <img th:if="${siteUser != null and siteUser.iconBase64 != null}" 
+                 th:src="${siteUser.iconBase64}" class="my-icon-img">
+            
+            <span th:if="${siteUser == null or siteUser.iconBase64 == null}">👤</span>
+        </div>
+
+        <div class="my-name-label" th:text="${siteUser != null and siteUser.nickname != '匿名' ? siteUser.nickname : '設定する'}">設定する</div>
+    </div> 
+
+
+    <div class="title-box">
+        <h1>Question Knock</h1>
+        <p>ITパスポート・基本情報 試験対策アプリ</p>
+    </div>
+
+    <a th:href="@{/mypage}" class="entry-btn">ENTRY</a>
+
+    <div class="admin-link-container">
+        <a th:href="@{/admin/login}" class="admin-link">管理者ログイン</a>
+    </div>
+
+    <div class="modal-overlay" id="profileModal">
+        <div class="profile-card">
+            <button type="button" class="close-modal-btn" onclick="closeProfileModal()">×</button>
+            <h2>プロフィール設定</h2>
+            
+            <form th:action="@{/profile/update}" method="post" enctype="multipart/form-data">
+                
+                <div class="file-upload-area">
+                    <div class="preview-circle">
+                        <img id="previewImg" class="preview-img" 
+                             th:src="${siteUser != null and siteUser.iconBase64 != null ? siteUser.iconBase64 : ''}"
+                             th:style="${siteUser != null and siteUser.iconBase64 != null ? '' : 'display:none;'}">
+                        <span id="previewPlaceholder" 
+                              th:style="${siteUser != null and siteUser.iconBase64 != null ? 'display:none;' : ''}">👤</span>
+                    </div>
+                    
+                    <label class="file-select-btn">
+                        画像を選択
+                        <input type="file" name="iconFile" class="file-input" accept="image/*" onchange="previewFile(this)">
+                    </label>
+                </div>
+
+                <div class="input-group">
+                    <label>ニックネーム</label>
+                    <input type="text" name="nickname" class="nickname-input" 
+                           th:value="${siteUser != null ? siteUser.nickname : ''}"
+                           placeholder="ニックネームを入力" maxlength="10">
+                </div>
+
+                <button type="submit" class="ok-btn">保存する</button>
+            </form>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        function openProfileModal() {
+            document.getElementById('profileModal').classList.add('active');
+        }
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.remove('active');
+        }
+
+        // 画像選択時のプレビュー処理
+        function previewFile(input) {
+            const file = input.files[0];
+            const previewImg = document.getElementById('previewImg');
+            const placeholder = document.getElementById('previewPlaceholder');
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    previewImg.style.display = 'block';
+                    placeholder.style.display = 'none';
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
+
+</body>
+</html>

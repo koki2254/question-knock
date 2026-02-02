@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Question Knock</title>
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet">
+    
+    <style>
+        /* === 配色定義 === */
+        :root {
+            --bg-color: #fecd1a;      /* 中黄 */
+            --main-border: #1e2749;   /* 藍色 */
+            --accent-white: #ffffff;  /* 白 */
+            --accent-red: #e73228;    /* 赤 */
+            /* アイコンの色: 藍色 */
+            --icon-color: #1e2749; 
+        }
+
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--bg-color);
+            font-family: "Press Start 2P", "DotGothic16", monospace;
+            color: var(--main-border);
+            height: 100vh; width: 100vw;
+            overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+            position: relative;
+        }
+
+        /* === 背景アニメーションエリア === */
+        .background-flow {
+            position: absolute; top: 0; left: 0; 
+            width: 100%; height: 100%; 
+            z-index: 0;
+            display: flex; flex-direction: column; justify-content: space-evenly;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        /* 流れるレーン */
+        .flow-lane {
+            display: flex;
+            width: max-content; 
+            flex-shrink: 0;
+            animation-name: scroll-left;
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+            will-change: transform;
+        }
+
+        /* アイコン(SVG)のスタイル */
+        .flow-icon-svg {
+            width: 50px;       /* サイズ指定 */
+            height: 50px;
+            color: var(--icon-color);
+            margin-right: 120px; /* アイコン同士の間隔 */
+            fill: currentColor;  /* 色を適用 */
+        }
+
+        @keyframes scroll-left {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); } 
+        }
+
+        /* スピード調整 */
+        .speed-slow { animation-duration: 60s; }
+        .speed-normal { animation-duration: 45s; }
+        .speed-fast { animation-duration: 30s; }
+
+        /* === メインコンテンツ === */
+        .title-container {
+            position: relative; z-index: 10; text-align: center;
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .main-logo {
+            font-size: 4rem; margin-bottom: 10px;
+            text-shadow: 6px 6px 0px rgba(0,0,0,0.1); line-height: 1.2;
+            -webkit-text-stroke: 2px var(--main-border);
+        }
+        
+        .sub-logo {
+            font-size: 1.2rem; font-family: "DotGothic16", monospace; font-weight: bold; margin-bottom: 60px;
+            background: var(--main-border); color: white; display: inline-block; padding: 5px 15px;
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.2);
+        }
+
+        .start-btn {
+            display: inline-block; background: var(--accent-white); color: var(--main-border);
+            border: 4px solid var(--main-border); padding: 20px 60px; font-size: 1.5rem; text-decoration: none;
+            box-shadow: 8px 8px 0px rgba(30, 39, 73, 0.4); transition: all 0.1s; position: relative;
+            font-family: "Press Start 2P", monospace; animation: blink 1.5s infinite;
+        }
+        
+        /* ホバー時の設定 (内側だけ赤く) */
+        .start-btn:hover {
+            background: var(--accent-red);
+            color: white;
+            transform: translate(4px, 4px);
+            box-shadow: 4px 4px 0px rgba(30, 39, 73, 0.4);
+            animation: none;
+        }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+        @media (max-width: 768px) {
+            .main-logo { font-size: 2.5rem; }
+            .flow-icon-svg { width: 30px; height: 30px; margin-right: 50px; }
+            .start-btn { padding: 15px 40px; font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <svg style="display: none;">
+        <symbol id="icon-pc" viewBox="0 0 24 24">
+            <path d="M2 4h20v14H2V4zm2 2v10h16V6H4zm4 16h8v2H8v-2z"></path>
+        </symbol>
+        <symbol id="icon-paper" viewBox="0 0 24 24">
+            <path d="M6 2h12v20H6V2zm2 2v16h8V4H8zm2 4h4v2h-4V8zm0 4h4v2h-4v-2zm0 4h4v2h-4v-2z"></path>
+        </symbol>
+        <symbol id="icon-pencil" viewBox="0 0 24 24">
+            <path d="M16 2l6 6L8 22H2v-6L16 2zm0 2L8 18H4v-4L16 4z"></path>
+        </symbol>
+    </svg>
+
+    <div class="background-flow">
+        
+        <div class="flow-lane speed-slow">
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+        </div>
+
+        <div class="flow-lane speed-fast" style="margin-left: -50px;">
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+        </div>
+
+        <div class="flow-lane speed-normal">
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+        </div>
+    </div>
+
+    <div class="title-container">
+        <h1 class="main-logo">Question<br>Knock</h1>
+        <div class="sub-logo">IT Passport / Basic / Applied Info</div>
+        <br><br>
+        <a th:href="@{/login}" class="start-btn">PRESS START</a>
+    </div>
+
+</body>
+</html>
