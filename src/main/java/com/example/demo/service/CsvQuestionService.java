@@ -50,6 +50,7 @@ public class CsvQuestionService {
                         .setHeader()
                         .setSkipHeaderRecord(true)
                         .setIgnoreSurroundingSpaces(true)
+                        .setIgnoreEmptyLines(true)     // ← これを追加：空行を完全に無視します
                         .setQuote('"')             // 引用符をダブルクォーテーションに指定
                         .setAllowMissingColumnNames(true)
                         .build();
@@ -64,6 +65,15 @@ public class CsvQuestionService {
                         // 例: record.get(6) が "\"問題文\"" ではなく "問題文" になります
                         
                         if (record.size() < 18) continue;
+                        
+                        boolean isEmptyRow = true;
+                        for (String value : record) {
+                            if (value != null && !value.trim().isEmpty()) {
+                                isEmptyRow = false;
+                                break;
+                            }
+                        }
+                        if (isEmptyRow) continue; // 実質空の行ならスキッ
 
                         Question q = new Question();
                         q.setExamCategory(record.get(0));
