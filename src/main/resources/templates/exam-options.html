@@ -211,6 +211,20 @@
             background: var(--accent-white);
             box-shadow: 4px 4px 0px var(--shadow-color);
         }
+        
+        /* selectタグ専用の微調整 */
+		select.field-label {
+		    display: block; /* flexを解除 */
+		    height: auto;
+		    min-height: 58px;
+		}
+		
+		/* 選択肢（option）の背景が白くなるように指定 */
+		select.field-label option {
+		    background: var(--accent-white);
+		    color: var(--main-border);
+		    font-family: "DotGothic16", monospace;
+		}
     </style>
 </head>
 <body>
@@ -247,13 +261,19 @@
 				    <label style="font-family: 'DotGothic16', monospace; font-weight: bold; display: block; margin-bottom: 10px;">
 				        <i class="px px-list" style="margin-right: 5px;"></i> 出題数
 				    </label>
-				    <select name="limit" class="field-label" style="width: 100%; cursor: pointer; appearance: none;">
-				        <option value="10">10問</option>
-				        <option value="30">30問</option>
-				        <option value="50">50問</option>
-				        <option value="100" selected>100問</option>
-				        <option value="999">全問解く</option>
-				    </select>
+				    <div style="position: relative;">
+				        <select name="limit" class="field-label select-pixel" 
+				                style="width: 100%; cursor: pointer; appearance: none; display: block; padding-right: 40px;">
+				            <option value="10">10問</option>
+				            <option value="30">30問</option>
+				            <option value="50">50問</option>
+				            <option value="100" selected>100問</option>
+				            <option value="999">全問解く</option>
+				        </select>
+				        <div style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--main-border);">
+				            ▼
+				        </div>
+				    </div>
 				</div>
 
                 <button type="submit" class="btn-start">問題を解く（全問）</button>
