@@ -290,31 +290,43 @@ public class ChallengeController {
     // ==========================================
     //   ④ 通常モード：問題スタート画面 (GET)
     // ==========================================
+ // ChallengeController.java 232行目付近の startChallenge メソッド
+
     @GetMapping("/start")
     public String startChallenge(
             @RequestParam("tagIds") List<Integer> tagIds,
             @RequestParam("examType") String examType, 
             @RequestParam("examSession") String examSession,
+            @RequestParam(name = "limit", defaultValue = "100") int limit, // ★追加
             Model model,
             HttpSession session) {
 
         String tagName = "複合学習";
         if (tagIds.size() == 1) {
             tagName = tagRepository.findById(tagIds.get(0))
-            		.map(t -> t.getTagName()) // getTagName()ではなくgetName()の可能性あり
+                    .map(t -> t.getTagName())
                     .orElse("複合学習");
         }
         
         session.setAttribute("currentTagName", tagName);
         session.setAttribute("normalModeStartTime", System.currentTimeMillis());
 
+        // 1. まず該当する問題を全件取得
         List<Question> allQuestions = questionRepository.findByExamCategoryAndExamSessionAndTagIdIn(
                 examType, examSession, tagIds);
         
+        // 2. シャッフルする
         Collections.shuffle(allQuestions);
-        session.setAttribute("challengeQuestions", allQuestions);
 
-        for (Question q : allQuestions) {
+        // 3. ★指定された数で制限をかける
+        List<Question> limitedQuestions = allQuestions.stream()
+                .limit(limit)
+                .collect(Collectors.toList());
+
+        // 4. セッションとモデルには制限後のリストを渡す
+        session.setAttribute("challengeQuestions", limitedQuestions);
+
+        for (Question q : limitedQuestions) {
             if (q.getChoices() != null) {
                 Collections.shuffle(q.getChoices());
             }
@@ -322,7 +334,7 @@ public class ChallengeController {
 
         List<String> labels = List.of("ア", "イ", "ウ", "エ");
         model.addAttribute("labels", labels);
-        model.addAttribute("questions", allQuestions);
+        model.addAttribute("questions", limitedQuestions); // ★変更
 
         return "challenge";
     }
