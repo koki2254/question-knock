@@ -175,13 +175,17 @@
                     <div class="choices">
                         <div class="choice-row" th:each="choice, cStat : ${q.choices}">
                             <button type="button"
-                                    class="choice-btn"
-                                    th:text="${labels != null ? labels[cStat.index] : cStat.index + 1}"
-                                    th:data-choice-id="${choice.choiceId}"
-                                    th:data-correct="${choice.isCorrect}"
-                                    th:data-explanation="${q.explanation}"
-                                    th:onclick="|selectAnswer(this, ${iterStat.index})|">
-                            </button>
+						            class="choice-btn"
+						            th:text="${labels != null ? labels[cStat.index] : cStat.index + 1}"
+						            th:data-choice-id="${choice.choiceId}"
+						            th:data-correct="${choice.isCorrect}"
+						            th:data-explanation="${q.explanation}"
+						            
+						            /* ★ここを追加：元の順番(0,1,2,3)を覚えさせる */
+						            th:attr="data-original-index=${cStat.index}" 
+						            
+						            th:onclick="|selectAnswer(this, ${iterStat.index})|">
+						    </button>
                             <img th:if="${choice.imageUrl != null}" th:src="@{${choice.imageUrl}}" 
                             style="max-width:200px; max-height:200px;" />
                             <div class="choice-text" th:text="${choice.choiceText}"></div>
@@ -366,24 +370,64 @@ function selectAnswer(btn, qIndex) {
         judgeBox.classList.add("judge-wrong"); 
     }
 
-    const expBox = document.getElementById('exp-' + qIndex);
-    const expTextElement = expBox.querySelector(".explanation-text");
+// 【selectAnswer関数の中の、判定ロジック（isCorrectのあたり）のすぐ下に配置】
 
-    // --- 解説文の組み立て ---
-    let finalMessage = "";
-
-    // 1. 解説データがあるかチェック
-    if (explanation && explanation !== 'null' && explanation.trim() !== '') {
-        finalMessage = explanation.trim();
-        // 句点（。）がなければ補完
-        if (!finalMessage.endsWith("。")) {
-            finalMessage += "。";
-        }
-    } 
-    // 3. 最後に「よって、正解は～」を合体させて表示
-    expTextElement.textContent = finalMessage + " よって、正解は「" + correctLabel + "」です。";
-
-    expBox.style.display = "block";
+	const expBox = document.getElementById('exp-' + qIndex);
+	const expTextElement = expBox.querySelector(".explanation-text");
+	
+	// --- 解説文の組み立て（新旧両対応版 ＋ 見出し分岐） ---
+	let finalMessage = "";
+	
+	if (explanation && explanation !== 'null' && explanation.trim() !== '') {
+	    
+	    if (explanation.includes('||')) {
+	        // 【新形式】分割して並べ替える処理
+	        const parts = explanation.split('||').map(p => p.trim());
+	        const commonIntro = parts[0]; 
+	        const choiceExplanations = parts.slice(1); 
+	
+	        // --- ★ 見出しの条件分岐ここから ---
+	        const splitKeywords = ["各選択肢の用語の解説：", "各選択肢の確認：", "各選択肢の検討："];
+	        let subTitle = "各選択肢の検討："; // デフォルト
+	
+	        for (const kw of splitKeywords) {
+	            if (commonIntro.includes(kw.replace("：", ""))) { // 「：」を除いた文字列で検索
+	                subTitle = kw;
+	                break;
+	            }
+	        }
+	        // --- ★ 見出しの条件分岐ここまで ---
+	
+	        // commonIntroに既にキーワードが含まれている場合は二重表示を防ぐ調整
+	        let displayIntro = commonIntro;
+	        splitKeywords.forEach(kw => {
+	            displayIntro = displayIntro.replace(kw, "").trim();
+	        });
+	
+	        finalMessage = displayIntro + "\n\n" + subTitle + "\n";
+	
+	        buttons.forEach((btn) => {
+	            const originalIdx = parseInt(btn.getAttribute('data-original-index'));
+	            const currentLabel = btn.textContent.trim().substring(0, 1);
+	            
+	            if (choiceExplanations[originalIdx] !== undefined) {
+	                finalMessage += currentLabel + "：" + choiceExplanations[originalIdx] + "\n";
+	            }
+	        });
+	    } else {
+	        // 【旧形式】|| がない場合は、そのままの文章を表示する
+	        finalMessage = explanation.trim();
+	    }
+	
+	    if (!finalMessage.trim().endsWith("。")) {
+	        finalMessage = finalMessage.trim() + "。";
+	    }
+	} 
+	
+	// 表示の反映
+	expTextElement.textContent = finalMessage + "\n\nよって、正解は「" + correctLabel + "」です。";
+	expTextElement.style.whiteSpace = "pre-wrap"; 
+	expBox.style.display = "block";
     
     // ナビゲーションボタンの表示制御
     const nextBtn = questionBox.querySelector('.btn-next');
