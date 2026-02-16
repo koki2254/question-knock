@@ -1,205 +1,243 @@
 <!DOCTYPE html>
 <html lang="ja" xmlns:th="http://www.thymeleaf.org">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>100本ノック & AI先生</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>100本ノック & AI先生</title>
 
-<style>
-    /* --- 全体レイアウト --- */
-    body { font-family: "Segoe UI", sans-serif; background: #f5f5f5; margin: 0; padding: 0; height: 100dvh; display: flex; flex-direction: column; overflow: hidden; }
-    
-    .main-wrapper { display: flex; flex: 1; height: 100%; overflow: hidden; position: relative; }
-
-    /* 左側：クイズエリア */
-    .quiz-area { flex: 2; padding: 20px; overflow-y: auto; background-color: #f5f5f5; width: 100%; box-sizing: border-box; }
-    .quiz-container { max-width: 800px; background: #fff; margin: 0 auto; padding: 25px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-
-    /* 右側：AIチャットエリア */
-    .ai-area { 
-        flex: 1; 
-        background-color: #fff; 
-        border-left: 1px solid #ddd; 
-        display: none; 
-        flex-direction: column; 
-        padding: 1rem; 
-        box-shadow: -2px 0 5px rgba(0,0,0,0.05); 
-        transition: all 0.3s ease;
-    }
-    
-    /* --- スマホ用レスポンシブ設定 --- */
-    @media (max-width: 768px) {
-        .main-wrapper { flex-direction: column; }
-        .quiz-area { padding: 10px; }
-        .quiz-container { padding: 15px; border-radius: 0; }
+    <style>
+        /* --- ベース設定 --- */
+        body { 
+            font-family: "Segoe UI", "Hiragino Sans", "Meiryo", sans-serif; 
+            background: #f5f5f5; 
+            margin: 0; 
+            padding: 0; 
+            height: 100dvh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden; 
+        }
         
-        /* スマホ時はAIエリアを浮かせる（オーバーレイ） */
-        .ai-area {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1000;
-            border-left: none;
-            box-sizing: border-box;
+        /* メインの包み。スマホでは縦並び、PCでは横並び */
+        .main-wrapper { 
+            display: flex; 
+            flex: 1; 
+            height: 100%; 
+            overflow: hidden; 
+            position: relative;
         }
 
-        .choice-row { gap: 10px; }
-        .choice-btn { width: 45px; height: 45px; padding: 5px; font-size: 1rem; }
-        .choice-text { font-size: 1rem; }
-        .main-logo-h1 { font-size: 1.5rem; }
-    }
+        /* --- クイズエリア --- */
+        .quiz-area { 
+            flex: 2; 
+            padding: 15px; 
+            overflow-y: auto; 
+            width: 100%; 
+            box-sizing: border-box; 
+        }
 
-    /* ボタン位置調整 */
-    .btn-toggle-ai { margin-left: auto; margin-right: 10px; padding: 8px 12px; cursor: pointer; }
-	
-    /* --- AIチャット UI --- */
-    .ai-header { font-weight: bold; color: #555; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
-    .ai-icon { font-size: 1.5rem; }
-    
-    .chat-history { flex: 1; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; padding: 10px; background-color: #fafafa; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; }
-    
-    .message { padding: 8px 12px; border-radius: 12px; max-width: 85%; font-size: 0.9rem; line-height: 1.4; word-wrap: break-word; }
-    .message.user { align-self: flex-end; background-color: #007bff; color: white; border-bottom-right-radius: 2px; }
-    .message.ai { align-self: flex-start; background-color: #e9ecef; color: #333; border-bottom-left-radius: 2px; }
-    
-    .chat-input-container { border-top: 1px solid #eee; padding-top: 10px; background: #fff; }
-    .chat-input-area { display: flex; gap: 8px; align-items: center; }
-    .chat-input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 25px; outline: none; font-size: 16px; /* iOSの自動ズーム防止 */ }
-    
-    /* --- クイズスタイル --- */
-    .question-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; gap: 10px; }
-    .btn-bookmark { background: none; border: none; cursor: pointer; font-size: 1rem; color: #ccc; flex-shrink: 0; }
-    
-    .choice-row { display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
-    .choice-btn { width: 55px; height: 55px; text-align: center; border-radius: 8px; font-size: 1.2rem; border: 1px solid #ccc; cursor: pointer; background: #fafafa; flex-shrink: 0; }
-    
-    .correct-answer { background: #d4edda !important; border-color: #28a745 !important; font-weight: bold; }
-    .wrong-answer { background: #f8d7da !important; border-color: #dc3545 !important; }
-    
-    .navigation { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
-    .btn-next, .btn-submit, .save-btn { padding: 12px 20px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; }
-    .btn-next { background: #007bff; color: white; }
-    .btn-submit { background: #28a745; color: white; }
-    .save-btn { background: #6c757d; color: white; }
+        .quiz-container { 
+            max-width: 800px; 
+            background: #fff; 
+            margin: 0 auto; 
+            padding: 20px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08); 
+        }
 
-    .question-box { display: none; } 
-    .question-box.active { display: block; }
-    .judge-box { display: none; margin-top: 12px; padding: 15px; border-radius: 6px; font-size: 1.1rem; font-weight: bold; }
-    .judge-correct { background: #d4edda; color: #155724; border-left: 5px solid #28a745; }
-    .judge-wrong { background: #f8d7da; color: #721c24; border-left: 5px solid #dc3545; }
-</style>
+        h1 { font-size: 1.4rem; margin-top: 0; color: #333; }
+
+        .question-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: flex-start; 
+            margin-bottom: 20px; 
+            gap: 10px;
+        }
+
+        /* AI先生ボタン */
+        .btn-toggle-ai {
+            background: #eef2ff;
+            color: #4f46e5;
+            border: 1px solid #c7d2fe;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .question-text { 
+            font-size: 1.05rem; 
+            line-height: 1.7; 
+            margin-bottom: 25px; 
+            color: #2d3748;
+            word-break: break-all;
+        }
+
+        /* --- 選択肢 --- */
+        .choices { display: flex; flex-direction: column; gap: 12px; }
+
+        .choice-row { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            cursor: pointer;
+        }
+
+        .choice-btn { 
+            width: 44px; 
+            height: 44px; 
+            border-radius: 8px; 
+            font-size: 1rem; 
+            border: 2px solid #e2e8f0; 
+            background: #fff; 
+            flex-shrink: 0; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            color: #4a5568;
+        }
+
+        .choice-text { font-size: 1rem; color: #4a5568; line-height: 1.4; }
+
+        /* 正解・不正解の色 */
+        .correct-answer { background: #dcfce7 !important; border-color: #22c55e !important; color: #166534 !important; }
+        .wrong-answer { background: #fee2e2 !important; border-color: #ef4444 !important; color: #991b1b !important; }
+
+        /* --- ナビゲーション --- */
+        .navigation { 
+            margin-top: 30px; 
+            display: flex; 
+            justify-content: flex-end; 
+            gap: 10px; 
+        }
+
+        .save-btn, .btn-next, .btn-submit {
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .save-btn { background: #edf2f7; color: #4a5568; }
+        .btn-next { background: #3b82f6; color: #fff; }
+
+        /* --- AIチャットエリア (スマホではオーバーレイ) --- */
+        .ai-area { 
+            position: fixed;
+            top: 0;
+            right: -100%; /* 最初は隠しておく */
+            width: 100%;
+            height: 100dvh;
+            background: #fff;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            transition: right 0.3s ease;
+        }
+        .ai-area.active { right: 0; }
+
+        .ai-header { 
+            padding: 15px; 
+            border-bottom: 1px solid #eee; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between;
+        }
+
+        .chat-history { flex: 1; overflow-y: auto; padding: 15px; background: #f8fafc; }
+
+        /* PC版レイアウト (画面が広い時だけ横並び) */
+        @media (min-width: 1024px) {
+            .ai-area { 
+                position: static; 
+                flex: 1; 
+                right: 0; 
+                display: flex; 
+                border-left: 1px solid #ddd; 
+            }
+            .btn-toggle-ai { display: none; } /* PCでは常に表示するのでボタン不要 */
+        }
+    </style>
 </head>
 
 <body>
 
 <div class="main-wrapper">
-
     <div class="quiz-area">
         <div class="quiz-container">
-            <h1 class="main-logo-h1">100本ノック</h1>
+            <h1>100本ノック</h1>
             
-            <form id="quizForm" th:action="@{/challenge/submit}" method="post" th:object="${questions}">
-                <div th:each="q, iterStat : ${questions}"
-                     th:id="'q-container-' + ${iterStat.index}"
-                     class="question-box"
-                     th:classappend="${iterStat.index == 0} ? ' active' : ''">
+            <div th:each="q, iterStat : ${questions}" th:id="'q-container-' + ${iterStat.index}" class="question-box active">
+                <div class="question-header">
+                    <h2 th:text="'第 ' + (${iterStat.index}+1) + ' 問'" style="margin:0; font-size:1.1rem;"></h2>
+                    <button type="button" class="btn-toggle-ai" onclick="toggleAI()">👨‍🏫 AI先生を表示</button>
+                </div>
 
-                    <div class="question-header">
-                        <h2 th:text="'第 ' + (${iterStat.index}+1) + ' 問'" style="margin:0; font-size: 1.2rem;"></h2>
-                        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
-                            <button type="button" class="btn-toggle-ai" onclick="toggleAITeacher()" id="aiToggleBtn">
-                                👨‍🏫 AI先生に聞く
-                            </button>
-                            <button type="button" class="btn-bookmark" th:onclick="|toggleBookmark(${q.questionId}, this)|">
-                                ★ <span style="font-size:0.8rem;">後で復習</span>
-                            </button>
-                        </div>
-                    </div>
+                <div class="question-text" th:text="${q.questionText}">問題文がここに入ります。</div>
 
-                    <div class="question-text" th:text="${q.questionText}" style="margin-bottom:15px; line-height:1.6;"></div>
-                    <img th:if="${q.imageUrl}" th:src="@{${q.imageUrl}}" class="question-image" style="max-width:100%; height:auto; display:block; margin:10px auto;"/>
-                    <input type="hidden" th:id="'hidden-answer-' + ${iterStat.index}" />
-                    
-                    <div class="choices">
-                        <div class="choice-row" th:each="choice, cStat : ${q.choices}">
-                            <button type="button"
-                                    class="choice-btn"
-                                    th:text="${labels != null ? labels[cStat.index] : cStat.index + 1}"
-                                    th:data-choice-id="${choice.choiceId}"
-                                    th:data-correct="${choice.isCorrect}"
-                                    th:data-explanation="${q.explanation}"
-                                    th:onclick="|selectAnswer(this, ${iterStat.index})|">
-                            </button>
-                            <div class="choice-text" th:text="${choice.choiceText}"></div>
-                        </div>
-                    </div>
-
-                    <div class="judge-box" th:id="'judge-' + ${iterStat.index}"></div>
-                    <div class="explanation-box" th:id="'exp-' + ${iterStat.index}" style="display:none; background:#f9f9f9; padding:15px; border-radius:8px; margin-top:15px; border:1px solid #eee;">
-                        <h3 style="margin-top:0; font-size:1rem; color:#333;">💡 解説</h3>
-                        <p class="explanation-text" style="font-size:0.95rem; color:#555;"></p>
-                    </div>
-
-                    <div class="navigation">
-                        <button type="button" class="save-btn" onclick="saveAndQuit()">中断</button>
-                        <button type="button" class="btn-next" th:onclick="'goToNextQuestion(' + (${iterStat.index} + 1) + ')'">次へ進む</button>
-                        <button type="submit" th:id="'submitBtn-' + ${iterStat.index}" class="btn-submit">結果を見る</button>
+                <div class="choices">
+                    <div class="choice-row" th:each="choice, cStat : ${q.choices}" th:onclick="|selectAnswer(this, ${iterStat.index})|">
+                        <div class="choice-btn" 
+                             th:text="${labels != null ? labels[cStat.index] : cStat.index + 1}"
+                             th:data-correct="${choice.isCorrect}">ア</div>
+                        <div class="choice-text" th:text="${choice.choiceText}">選択肢のテキスト</div>
                     </div>
                 </div>
-            </form>
+
+                <div class="navigation">
+                    <button type="button" class="save-btn" onclick="saveAndQuit()">一時保存</button>
+                    <button type="button" class="btn-next">次へ</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="ai-area" id="aiArea">
         <div class="ai-header">
-            <span class="ai-icon">👨‍🏫</span>
-            <span>AI質問チャット</span>
-            <button onclick="toggleAITeacher()" style="margin-left:auto; background:none; border:none; font-size:1.5rem; cursor:pointer;">×</button>
+            <strong>👨‍🏫 AI先生</strong>
+            <button onclick="toggleAI()" style="border:none; background:none; font-size:1.5rem;">×</button>
         </div>
-        <div class="chat-history" id="chat-history">
-            <div class="message ai">
-                講師のAIです！<br>この問題の不明点や、IT用語の解説など何でも聞いてください。
+        <div class="chat-history">
+            <div style="background:#eef2ff; padding:10px; border-radius:8px; font-size:0.9rem;">
+                問題について分からないことがあれば聞いてくださいね。
             </div>
         </div>
-        
-        <div class="chat-input-container">
-            <div id="image-preview-area" style="display:none; padding:5px;">
-                <img id="image-preview" src="" alt="preview" style="height:60px; border-radius:5px;">
-                <button onclick="removeImage()">×</button>
-            </div>
-
-            <div class="chat-input-area">
-                <button class="btn-attach" onclick="document.getElementById('image-input').click()">
-                    📎
-                </button>
-                <input type="file" id="image-input" accept="image/*" style="display: none;" onchange="handleImageSelect(event)">
-                <input type="text" id="user-input" class="chat-input" placeholder="メッセージ..." onkeypress="handleKeyPress(event)" />
-                <button onclick="sendMessage()" class="btn-send" id="btn-send">送信</button>
-            </div>
+        <div style="padding:15px; border-top:1px solid #eee; display:flex; gap:8px;">
+            <input type="text" style="flex:1; padding:10px; border-radius:20px; border:1px solid #ddd;" placeholder="質問を入力...">
+            <button style="background:#3b82f6; color:#fff; border:none; padding:0 15px; border-radius:20px;">送信</button>
         </div>
     </div>
-
 </div>
 
-<script th:inline="javascript">
-/* JSロジックは基本維持ですが、スマホ用の開閉を考慮 */
-function toggleAITeacher() {
-    const aiArea = document.getElementById('aiArea');
-    const toggleBtn = document.getElementById('aiToggleBtn');
-    
-    if (aiArea.style.display === 'none' || aiArea.style.display === '') {
-        aiArea.style.display = 'flex';
-        toggleBtn.innerText = "先生を隠す";
-    } else {
-        aiArea.style.display = 'none';
-        toggleBtn.innerText = "👨‍🏫 AI先生に聞く";
+<script>
+    function toggleAI() {
+        document.getElementById('aiArea').classList.toggle('active');
     }
-}
 
-// 既存のselectAnswer, sendMessageなどはそのまま利用可能です。
-// （省略：元のロジックをここに統合してください）
+    function selectAnswer(row, qIndex) {
+        const btn = row.querySelector('.choice-btn');
+        const isCorrect = btn.getAttribute('data-correct') === 'true';
+        
+        // すでに回答済みなら何もしない
+        if(row.parentElement.classList.contains('answered')) return;
+        row.parentElement.classList.add('answered');
+
+        if(isCorrect) {
+            btn.classList.add('correct-answer');
+        } else {
+            btn.classList.add('wrong-answer');
+            // 正解のボタンも強調する
+            const allBtns = row.parentElement.querySelectorAll('.choice-btn');
+            allBtns.forEach(b => {
+                if(b.getAttribute('data-correct') === 'true') b.classList.add('correct-answer');
+            });
+        }
+    }
 </script>
 
 </body>
