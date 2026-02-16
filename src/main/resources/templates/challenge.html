@@ -30,7 +30,32 @@
 	.ai-hidden {
 	    display: none !important;
 	}
-    
+	
+	/* 詳細表示用のスタイル */
+	.ai-detail-container {
+	    margin-top: 8px;
+	    border-top: 1px dashed #ccc;
+	    padding-top: 5px;
+	}
+	.ai-detail-content {
+	    display: none; /* 初期状態は非表示 */
+	    font-size: 0.85rem;
+	    color: #555;
+	    margin-top: 5px;
+	    background: #f0f0f0;
+	    padding: 8px;
+	    border-radius: 5px;
+	}
+	.btn-show-detail {
+	    background: none;
+	    border: none;
+	    color: #007bff;
+	    cursor: pointer;
+	    font-size: 0.8rem;
+	    padding: 0;
+	    text-decoration: underline;
+	}
+	    
     .chat-history { flex: 1; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; padding: 10px; background-color: #fafafa; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; }
     
     .message { padding: 8px 12px; border-radius: 12px; max-width: 90%; font-size: 0.9rem; line-height: 1.4; word-wrap: break-word; }
@@ -497,12 +522,51 @@ function addMessage(text, sender, imageUrl = null) {
         const img = document.createElement('img');
         img.src = imageUrl;
         msgDiv.appendChild(img);
-        if (text) msgDiv.appendChild(document.createElement('br')); 
     }
     
     if (text) {
-        const textNode = document.createTextNode(text);
-        msgDiv.appendChild(textNode);
+        if (sender === 'ai' && text.includes('---')) {
+            // AIの回答を「概要」と「詳細」に分割
+            const parts = text.split('---');
+            const summaryText = parts[0].trim();
+            const detailText = parts[1].trim();
+
+            // 概要を表示
+            const summaryDiv = document.createElement('div');
+            summaryDiv.innerText = summaryText;
+            msgDiv.appendChild(summaryDiv);
+
+            // 詳細表示ボタンとコンテンツを作成
+            const detailContainer = document.createElement('div');
+            detailContainer.className = 'ai-detail-container';
+
+            const toggleBtn = document.createElement('button');
+            toggleBtn.className = 'btn-show-detail';
+            toggleBtn.innerText = '▼ 詳細を表示';
+            toggleBtn.onclick = function() {
+                const content = this.nextElementSibling;
+                if (content.style.display === 'block') {
+                    content.style.display = 'none';
+                    this.innerText = '▼ 詳細を表示';
+                } else {
+                    content.style.display = 'block';
+                    this.innerText = '▲ 詳細を閉じる';
+                }
+            };
+
+            const detailContent = document.createElement('div');
+            detailContent.className = 'ai-detail-content';
+            detailContent.innerText = detailText;
+
+            detailContainer.appendChild(toggleBtn);
+            detailContainer.appendChild(detailContent);
+            msgDiv.appendChild(detailContainer);
+        } else {
+            // 通常のメッセージ表示
+            const textNode = document.createElement('div');
+            textNode.innerText = text;
+            msgDiv.appendChild(textNode);
+        }
     }
     
     historyDiv.appendChild(msgDiv);
