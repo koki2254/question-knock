@@ -181,7 +181,9 @@
 							        th:data-correct="${choice.isCorrect}"
 							        th:data-explanation="${q.explanation}"
 							        
-							        th:attr="data-original-index=${choice.originalIndex}" 
+							        
+							        th:attr="data-original-index=${cStat.index}" 
+							        
 							        
 							        th:onclick="|selectAnswer(this, ${iterStat.index})|">
 							</button>
