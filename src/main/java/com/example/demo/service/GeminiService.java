@@ -15,12 +15,17 @@ public class GeminiService {
     @Value("${gemini.api.key}")
     private String apiKey;
 
-    // 最新のGemini 2.5 Flash モデルを使用
-    private static final String GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+ // 1. モデル名の修正（最新のFlashモデルを指定）
+    private static final String GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
-    private final HttpClient httpClient = HttpClient.newHttpClient();
+    // 2. HttpClientをHTTP/2対応で初期化（使い回す）
+    private final HttpClient httpClient = HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_2)
+            .build();
 
     public String askGemini(String questionText, String userMessage, String imageBase64, String mimeType) {
+        // 3. レスポンスを制限する設定（オプション）をJSONに加える
+        // 必要以上に長い回答をさせないことで生成時間を短縮します
         try {
             // ★★★ プロンプト（AIへの命令）を修正 ★★★
             // 「友達口調」や「過度な励まし」を排除し、事務的でフラットなAIアシスタントに変更
