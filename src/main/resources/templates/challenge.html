@@ -175,17 +175,18 @@
                     <div class="choices">
                         <div class="choice-row" th:each="choice, cStat : ${q.choices}">
                             <button type="button"
-						            class="choice-btn"
-						            th:text="${labels != null ? labels[cStat.index] : cStat.index + 1}"
-						            th:data-choice-id="${choice.choiceId}"
-						            th:data-correct="${choice.isCorrect}"
-						            th:data-explanation="${q.explanation}"
-						            
-						            /* ★ここを追加：元の順番(0,1,2,3)を覚えさせる */
-						            th:attr="data-original-index=${cStat.index}" 
-						            
-						            th:onclick="|selectAnswer(this, ${iterStat.index})|">
-						    </button>
+							        class="choice-btn"
+							        th:text="${labels != null ? labels[cStat.index] : cStat.index + 1}"
+							        th:data-choice-id="${choice.choiceId}"
+							        th:data-correct="${choice.isCorrect}"
+							        th:data-explanation="${q.explanation}"
+							        
+							        /* ★ここを修正：もしchoiceオブジェクトに元の順番が入っていればそれを使う */
+							        /* 例として、choice.originalIndex というプロパティがある場合 */
+							        th:attr="data-original-index=${choice.originalIndex}" 
+							        
+							        th:onclick="|selectAnswer(this, ${iterStat.index})|">
+							</button>
                             <img th:if="${choice.imageUrl != null}" th:src="@{${choice.imageUrl}}" 
                             style="max-width:200px; max-height:200px;" />
                             <div class="choice-text" th:text="${choice.choiceText}"></div>
