@@ -125,7 +125,7 @@
 
     <div class="quiz-area">
         <div class="quiz-container">
-            <h1>100本ノック</h1>
+            <h1>問題ノック</h1>
             
             <div th:if="${questions == null or questions.isEmpty()}" style="color: red; padding: 20px; border: 2px solid red;">
                 <h3>⚠️ データがありません</h3>
@@ -469,23 +469,41 @@ async function sendMessage() {
     const inputField = document.getElementById('user-input');
     const message = inputField.value.trim();
     
-    if (!message && !selectedImageBase64) return;
+    // 1. 現在のアクティブな問題要素を取得
+    const currentBox = document.querySelector('.question-box.active');
+    const questionText = currentBox.querySelector('.question-text').innerText;
+    
+    // 2. 問題画像（.question-image）が存在するか確認
+    const quizImgElement = currentBox.querySelector('.question-image');
+    
+    let finalImageBase64 = selectedImageBase64;
+    let finalMimeType = selectedImageMimeType;
 
-    addMessage(message, 'user', selectedImageBase64 ? document.getElementById('image-preview').src : null);
+    // 3. ユーザーが画像を添付しておらず、かつ問題に画像がある場合、その画像を取得する
+    if (!finalImageBase64 && quizImgElement) {
+        const src = quizImgElement.src;
+        // 画像がBase64形式で埋め込まれている場合 (data:image/png;base64,...)
+        if (src.startsWith('data:')) {
+            const parts = src.split(',');
+            finalMimeType = parts[0].split(':')[1].split(';')[0];
+            finalImageBase64 = parts[1];
+        } 
+        // URL形式の場合は、AIがURLを直接見られないため、別途「URLをテキストで送る」か
+        // 「CanvasでBase64変換」が必要ですが、まずはBase64対応を確認してください。
+    }
+
+    if (!message && !finalImageBase64) return;
+
+    // ユーザーへの表示（添付画像があればそれを、なければ問題画像を表示）
+    const displayImg = finalImageBase64 ? `data:${finalMimeType};base64,${finalImageBase64}` : null;
+    addMessage(message, 'user', displayImg);
     
     inputField.value = '';
-    const currentImageBase64 = selectedImageBase64; 
-    const currentMimeType = selectedImageMimeType;
     removeImage(); 
     
     const sendBtn = document.getElementById('btn-send');
     sendBtn.disabled = true;
     sendBtn.innerText = '...';
-
-// 現在表示されている問題（activeクラス）からテキストを取得
-    const currentBox = document.querySelector('.question-box.active');
-    // question-textクラスからテキストを直接取得（hiddenフィールドを介さない）
-    const questionText = currentBox.querySelector('.question-text').innerText;
 
     try {
         const response = await fetch('/api/ai/ask', {
@@ -494,8 +512,8 @@ async function sendMessage() {
             body: JSON.stringify({ 
                 questionText: questionText,
                 userMessage: message,
-                imageBase64: currentImageBase64, 
-                mimeType: currentMimeType
+                imageBase64: finalImageBase64, // 自動取得した画像または添付画像
+                mimeType: finalMimeType
             })
         });
 
