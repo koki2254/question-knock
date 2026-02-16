@@ -2,7 +2,6 @@
 <html lang="ja" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Question Knock</title>
     <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet">
     
@@ -13,6 +12,7 @@
             --main-border: #1e2749;   /* 藍色 */
             --accent-white: #ffffff;  /* 白 */
             --accent-red: #e73228;    /* 赤 */
+            /* アイコンの色: 藍色 */
             --icon-color: #1e2749; 
         }
 
@@ -21,8 +21,7 @@
             background-color: var(--bg-color);
             font-family: "Press Start 2P", "DotGothic16", monospace;
             color: var(--main-border);
-            height: 100dvh; /* スマホのアドレスバー考慮 */
-            width: 100%;
+            height: 100vh; width: 100vw;
             overflow: hidden;
             display: flex; justify-content: center; align-items: center;
             position: relative;
@@ -38,6 +37,7 @@
             overflow: hidden;
         }
 
+        /* 流れるレーン */
         .flow-lane {
             display: flex;
             width: max-content; 
@@ -48,11 +48,13 @@
             will-change: transform;
         }
 
+        /* アイコン(SVG)のスタイル */
         .flow-icon-svg {
-            width: 50px; height: 50px;
+            width: 50px;       /* サイズ指定 */
+            height: 50px;
             color: var(--icon-color);
-            margin-right: 120px; 
-            fill: currentColor;
+            margin-right: 120px; /* アイコン同士の間隔 */
+            fill: currentColor;  /* 色を適用 */
         }
 
         @keyframes scroll-left {
@@ -60,6 +62,7 @@
             100% { transform: translateX(-50%); } 
         }
 
+        /* スピード調整 */
         .speed-slow { animation-duration: 60s; }
         .speed-normal { animation-duration: 45s; }
         .speed-fast { animation-duration: 30s; }
@@ -68,70 +71,45 @@
         .title-container {
             position: relative; z-index: 10; text-align: center;
             animation: float 3s ease-in-out infinite;
-            width: 90%; /* スマホでの横幅確保 */
-            max-width: 600px;
         }
-
         @keyframes float {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-10px); }
         }
 
         .main-logo {
-            font-size: clamp(2rem, 12vw, 4rem); /* 画面幅に合わせて伸縮 */
-            margin-bottom: 10px;
-            text-shadow: 6px 6px 0px rgba(0,0,0,0.1); 
-            line-height: 1.1;
-            -webkit-text-stroke: 1.5px var(--main-border);
-            word-wrap: break-word;
+            font-size: 4rem; margin-bottom: 10px;
+            text-shadow: 6px 6px 0px rgba(0,0,0,0.1); line-height: 1.2;
+            -webkit-text-stroke: 2px var(--main-border);
         }
         
         .sub-logo {
-            font-size: clamp(0.7rem, 3vw, 1.2rem); 
-            font-family: "DotGothic16", monospace; 
-            font-weight: bold; 
-            margin-bottom: 40px;
-            background: var(--main-border); 
-            color: white; 
-            display: inline-block; 
-            padding: 5px 15px;
+            font-size: 1.2rem; font-family: "DotGothic16", monospace; font-weight: bold; margin-bottom: 60px;
+            background: var(--main-border); color: white; display: inline-block; padding: 5px 15px;
             box-shadow: 4px 4px 0px rgba(0,0,0,0.2);
         }
 
         .start-btn {
-            display: inline-block; 
-            background: var(--accent-white); 
-            color: var(--main-border);
-            border: 4px solid var(--main-border); 
-            padding: 15px 40px; 
-            font-size: clamp(1rem, 4vw, 1.5rem); 
-            text-decoration: none;
-            box-shadow: 6px 6px 0px rgba(30, 39, 73, 0.4); 
-            transition: all 0.1s; 
-            position: relative;
-            font-family: "Press Start 2P", monospace; 
-            animation: blink 1.5s infinite;
-            white-space: nowrap;
+            display: inline-block; background: var(--accent-white); color: var(--main-border);
+            border: 4px solid var(--main-border); padding: 20px 60px; font-size: 1.5rem; text-decoration: none;
+            box-shadow: 8px 8px 0px rgba(30, 39, 73, 0.4); transition: all 0.1s; position: relative;
+            font-family: "Press Start 2P", monospace; animation: blink 1.5s infinite;
         }
         
-        .start-btn:hover, .start-btn:active {
+        /* ホバー時の設定 (内側だけ赤く) */
+        .start-btn:hover {
             background: var(--accent-red);
             color: white;
             transform: translate(4px, 4px);
-            box-shadow: 2px 2px 0px rgba(30, 39, 73, 0.4);
+            box-shadow: 4px 4px 0px rgba(30, 39, 73, 0.4);
             animation: none;
         }
-
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
 
-        /* === モバイル専用の微調整 === */
-        @media (max-width: 480px) {
-            .flow-icon-svg { 
-                width: 30px; height: 30px; 
-                margin-right: 60px; /* 間隔を少し詰める */
-            }
-            .sub-logo { margin-bottom: 30px; }
-            .start-btn { padding: 12px 30px; }
+        @media (max-width: 768px) {
+            .main-logo { font-size: 2.5rem; }
+            .flow-icon-svg { width: 30px; height: 30px; margin-right: 50px; }
+            .start-btn { padding: 15px 40px; font-size: 1.2rem; }
         }
     </style>
 </head>
@@ -150,14 +128,74 @@
     </svg>
 
     <div class="background-flow">
+        
         <div class="flow-lane speed-slow">
-            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg><svg class="flow-icon-svg"><use href="#icon-pc"/></svg><svg class="flow-icon-svg"><use href="#icon-pc"/></svg><svg class="flow-icon-svg"><use href="#icon-pc"/></svg><svg class="flow-icon-svg"><use href="#icon-pc"/></svg><svg class="flow-icon-svg"><use href="#icon-pc"/></svg><svg class="flow-icon-svg"><use href="#icon-pc"/></svg><svg class="flow-icon-svg"><use href="#icon-pc"/></svg><svg class="flow-icon-svg"><use href="#icon-pc"/></svg><svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pc"/></svg>
         </div>
+
         <div class="flow-lane speed-fast" style="margin-left: -50px;">
-            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg><svg class="flow-icon-svg"><use href="#icon-paper"/></svg><svg class="flow-icon-svg"><use href="#icon-paper"/></svg><svg class="flow-icon-svg"><use href="#icon-paper"/></svg><svg class="flow-icon-svg"><use href="#icon-paper"/></svg><svg class="flow-icon-svg"><use href="#icon-paper"/></svg><svg class="flow-icon-svg"><use href="#icon-paper"/></svg><svg class="flow-icon-svg"><use href="#icon-paper"/></svg><svg class="flow-icon-svg"><use href="#icon-paper"/></svg><svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-paper"/></svg>
         </div>
+
         <div class="flow-lane speed-normal">
-            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg><svg class="flow-icon-svg"><use href="#icon-pencil"/></svg><svg class="flow-icon-svg"><use href="#icon-pencil"/></svg><svg class="flow-icon-svg"><use href="#icon-pencil"/></svg><svg class="flow-icon-svg"><use href="#icon-pencil"/></svg><svg class="flow-icon-svg"><use href="#icon-pencil"/></svg><svg class="flow-icon-svg"><use href="#icon-pencil"/></svg><svg class="flow-icon-svg"><use href="#icon-pencil"/></svg><svg class="flow-icon-svg"><use href="#icon-pencil"/></svg><svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
+            <svg class="flow-icon-svg"><use href="#icon-pencil"/></svg>
         </div>
     </div>
 

@@ -2,7 +2,6 @@
 <html lang="ja" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ホーム - Question Knock</title>
     <th:block th:replace="~{fragments/header :: style}"></th:block>
     
@@ -22,13 +21,11 @@
             background-image: none;
             font-family: "Press Start 2P", "DotGothic16", monospace;
             color: var(--main-border);
-            padding-top: 140px; /* ログアウトボタンとの干渉を避けるため少し広めに */
+            padding-top: 110px;
             padding-bottom: 40px;
-            margin: 0;
-            overflow-x: hidden; /* 横揺れ防止 */
         }
 
-        .dashboard-container { max-width: 1100px; margin: 0 auto; padding: 0 15px; box-sizing: border-box; }
+        .dashboard-container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
 
         /* === 共通ボックス === */
         .pixel-box {
@@ -37,7 +34,6 @@
             box-shadow: 6px 6px 0px var(--shadow-color);
             padding: 30px;
             position: relative;
-            box-sizing: border-box;
         }
 
         /* === レイアウト === */
@@ -46,9 +42,7 @@
         }
 
         /* === ログアウトボタン === */
-        .logout-container { 
-            position: absolute; top: 90px; left: 15px; z-index: 100; 
-        }
+        .logout-container { position: absolute; top: 90px; left: 20px; z-index: 100; }
         
         .logout-btn {
             display: inline-block;
@@ -56,8 +50,8 @@
             color: var(--accent-white);
             border: 4px solid var(--main-border);
             box-shadow: 4px 4px 0px rgba(0,0,0,0.2);
-            padding: 10px 15px;
-            font-family: "DotGothic16", monospace; /* 読みやすさのため */
+            padding: 10px 20px;
+            font-family: "Press Start 2P", "DotGothic16", monospace;
             font-size: 0.9rem;
             text-decoration: none;
             cursor: pointer;
@@ -71,7 +65,7 @@
         }
 
         /* === 左側: プロフィール === */
-        .profile-section { text-align: center; height: fit-content; background: var(--accent-white); }
+        .profile-section { text-align: center; height: 100%; background: var(--accent-white); }
         
         .profile-img-container {
             position: relative; width: 140px; height: 140px;
@@ -85,19 +79,23 @@
             background: #eee;
         }
         
+        /* プロフィールの鉛筆アイコン */
         .edit-icon-overlay {
-            position: absolute; bottom: -5px; right: -5px;
+            position: absolute; bottom: -10px; right: -10px;
             background: var(--accent-red); 
             color: white;
-            width: 36px; height: 36px;
+            width: 40px; height: 40px;
             display: flex; align-items: center; justify-content: center;
             border: 4px solid var(--main-border);
-            font-size: 1.2rem;
+            font-size: 1.5rem;
             z-index: 2;
+            cursor: pointer;
         }
-        .edit-icon-overlay::after { content: "✎"; }
+        .edit-icon-overlay::after {
+            content: "✎"; display: block; transform: rotate(5deg); margin-bottom: 3px;
+        }
 
-        .user-name { font-size: 1.2rem; margin-bottom: 20px; line-height: 1.4; display: block; word-break: break-all; }
+        .user-name { font-size: 1.4rem; margin-bottom: 20px; line-height: 1.4; display: inline-block; }
         
         .btn-edit-profile {
             display: inline-block;
@@ -106,40 +104,44 @@
             border: 4px solid var(--main-border);
             box-shadow: 4px 4px 0px var(--shadow-color);
             padding: 10px 20px;
-            font-family: inherit; font-size: 0.8rem; text-decoration: none;
+            font-family: inherit; font-size: 0.9rem; text-decoration: none;
             cursor: pointer; transition: background 0.2s;
-            width: 100%; box-sizing: border-box;
+            width: 80%;
         }
         .btn-edit-profile:hover { background: var(--accent-red); }
+
 
         /* === 右側: ステータスエリア === */
         .stats-section { display: flex; flex-direction: column; gap: 40px; }
 
-        .rank-card-box { background: transparent; border: none; box-shadow: none; padding: 0; }
+        /* === ランク表示 === */
+        .rank-card-box {
+            background: transparent; border: none; box-shadow: none; padding: 0; margin-bottom: 0;
+        }
         
         .rank-header {
             background: var(--main-border); color: white;
             display: inline-flex; align-items: center; gap: 10px;
-            padding: 8px 15px; margin-bottom: 20px; font-size: 0.9rem;
+            padding: 8px 15px; margin-bottom: 20px; font-size: 1rem;
             box-shadow: 4px 4px 0px rgba(0,0,0,0.1);
         }
 
-        .rank-container { display: flex; gap: 20px; }
+        .rank-container { display: flex; gap: 30px; }
         
         .rank-item {
-            flex: 1; padding: 15px 5px;
+            flex: 1; padding: 20px;
             border: 4px solid var(--main-border);
             text-align: center;
             background: var(--accent-white); 
             box-shadow: 6px 6px 0px var(--shadow-color);
         }
         
-        .rank-title { font-size: 0.7rem; margin-bottom: 10px; display: block; border-bottom: 2px solid var(--main-border); padding-bottom: 5px; }
+        .rank-title { font-size: 0.8rem; margin-bottom: 10px; display: block; border-bottom: 2px solid var(--main-border); padding-bottom: 5px; }
         .rank-value {
-            font-size: clamp(2rem, 8vw, 3.5rem); font-weight: bold;
+            font-size: 3.5rem; font-weight: bold;
             text-shadow: 3px 3px 0px rgba(0,0,0,0.1);
         }
-        .rank-S { color: #f1c40f; text-shadow: 2px 2px 0px var(--main-border); }
+        .rank-S { color: #f1c40f; text-shadow: 3px 3px 0px var(--main-border); }
         .rank-A { color: var(--accent-red); }
         .rank-B { color: var(--main-border); }
         .rank-C { color: #2ecc71; }
@@ -147,50 +149,65 @@
         .rank-D { color: var(--main-border); }
 
         .rank-detail-link {
-            color: var(--main-border); font-family: inherit; font-size: 0.8rem;
-            text-decoration: none; cursor: pointer; margin-top: 15px; display: inline-block;
+            background: transparent; border: none; box-shadow: none;
+            color: var(--main-border); font-family: inherit; font-size: 0.9rem;
+            text-decoration: none; cursor: pointer; margin-top: 10px;
+            display: inline-block;
         }
+        .rank-detail-link:hover { color: var(--accent-red); text-decoration: underline; }
+
 
         /* === 目標シート === */
         .goal-card {
             background: #fdfbf7; 
             border: 4px solid var(--main-border);
             box-shadow: 6px 6px 0px var(--shadow-color);
-            padding: 20px; position: relative; color: var(--main-border);
+            padding: 30px; position: relative; color: var(--main-border);
             background-image: linear-gradient(transparent 31px, var(--notebook-line) 32px);
             background-size: 100% 32px; background-position: 0 10px;
         }
         
         .goal-label { 
-            font-size: 1rem; margin-bottom: 10px; 
+            font-size: 1.1rem; margin-bottom: 10px; 
             color: var(--accent-red); font-weight: bold;
-            background: #fdfbf7; display: inline-flex; align-items: center; padding-right: 10px;
+            background: #fdfbf7; display: inline-flex; align-items: center; 
+            padding-right: 10px;
         }
         
         .goal-direct-input {
             width: 100%; height: 96px;
-            background: transparent; border: none;
-            color: var(--main-border); font-size: 1rem; line-height: 32px;
+            background: transparent; border: none; box-shadow: none;
+            color: var(--main-border); font-size: 1.1rem; line-height: 32px;
             padding: 0; resize: none; font-family: inherit; outline: none;
         }
+        .goal-direct-input::placeholder { color: #aaa; }
 
+        /* UPDATEボタン */
         .goal-mini-btn {
             display: inline-flex; align-items: center; justify-content: center;
             background: var(--main-border); color: var(--accent-white);
-            width: 44px; height: 44px; margin-top: 10px;
+            width: 50px; height: 50px; padding: 0; margin-top: 10px;
+            font-size: 1.5rem;
             border: 4px solid var(--main-border);
             box-shadow: 4px 4px 0px rgba(0,0,0,0.3);
-            cursor: pointer;
+            cursor: pointer; transition: all 0.1s;
         }
-        .goal-mini-btn::after { content: "✎"; }
+        .goal-mini-btn::after {
+            content: "✎"; display: block; transform: rotate(5deg);
+        }
+        
+        .goal-mini-btn:hover {
+            background: var(--accent-red); 
+            transform: translate(2px, 2px); 
+            box-shadow: 2px 2px 0px rgba(0,0,0,0.3);
+        }
 
-        /* モーダル調整 */
+        /* モーダル */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(30, 39, 73, 0.9);
             display: flex; justify-content: center; align-items: center;
             z-index: 2000; opacity: 0; visibility: hidden; transition: 0.2s;
-            padding: 10px; box-sizing: border-box;
         }
         .modal-overlay.active { opacity: 1; visibility: visible; }
         
@@ -198,40 +215,70 @@
             background: var(--accent-white);
             border: 4px solid var(--main-border);
             box-shadow: 6px 6px 0px var(--shadow-color);
-            padding: 20px; width: 100%; max-width: 400px; text-align: center;
-            position: relative; box-sizing: border-box;
-            max-height: 90vh; overflow-y: auto;
+            padding: 30px; width: 95%; max-width: 500px; text-align: center;
+            position: relative;
         }
 
+        /* ★修正: 閉じるボタンの色を藍色に変更し、影を削除 */
         .close-modal-btn {
-            position: absolute; top: 5px; right: 10px;
-            font-size: 2rem; color: var(--main-border); cursor: pointer; background: none; border: none;
+            position: absolute; top: 10px; right: 15px;
+            font-size: 2.5rem; 
+            color: var(--main-border); /* 藍色に変更 */
+            cursor: pointer; background: none; border: none;
+            text-shadow: none; /* 影を削除 */
+        }
+        
+        .input-group { margin-bottom: 25px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 8px; font-size: 0.9rem; color: var(--main-border); }
+        .nickname-input { 
+             width: 100%; padding: 10px; border: 4px solid var(--main-border); font-family: inherit; font-size: 1rem;
+             box-sizing: border-box;
+        }
+        
+        .ok-btn { 
+            display: inline-block;
+            background: var(--bg-color); color: var(--main-border);
+            border: 4px solid var(--main-border);
+            box-shadow: 4px 4px 0px var(--shadow-color);
+            padding: 10px 20px;
+            font-family: inherit; font-size: 0.9rem; text-decoration: none;
+            cursor: pointer; width: 100%; margin-top: 10px; 
+        }
+        .ok-btn:hover { background: var(--accent-red); color: white; }
+
+        .file-upload-area { margin-bottom: 25px; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        .preview-circle {
+            width: 120px; height: 120px; background: #eee;
+            border: 4px solid var(--main-border);
+            display: flex; justify-content: center; align-items: center;
+        }
+        .preview-img-modal { width: 100%; height: 100%; object-fit: cover; }
+        .file-input { display: none; }
+        .file-select-btn { 
+            display: inline-block; background: #eee; color: var(--main-border);
+            border: 4px solid var(--main-border);
+            box-shadow: 4px 4px 0px var(--shadow-color);
+            padding: 5px 15px; font-family: inherit; font-size: 0.8rem; cursor: pointer;
         }
 
-        /* === レスポンシブ (スマホ向け) === */
-        @media (max-width: 768px) {
-            body { padding-top: 130px; }
-            .dashboard-grid { grid-template-columns: 1fr; gap: 20px; }
-            .logout-container { top: 80px; }
-            .profile-section { padding: 20px; }
-            .rank-container { gap: 10px; }
-            .rank-item { padding: 10px 5px; }
-            .rank-value { font-size: 2.5rem; }
-            .pixel-box { padding: 20px; }
-        }
+        @media (max-width: 768px) { .dashboard-grid { grid-template-columns: 1fr; gap: 30px; } }
     </style>
 </head>
 <body>
+
     <nav th:replace="~{fragments/header :: part}"></nav>
 
     <div class="logout-container">
         <form th:action="@{/logout}" method="post">
-            <button type="submit" class="logout-btn">← LOGOUT</button>
+            <button type="submit" class="logout-btn">
+                ← LOGOUT
+            </button>
         </form>
     </div>
 
     <div class="dashboard-container">
         <div class="dashboard-grid">
+            
             <div class="pixel-box profile-section">
                 <div class="profile-img-container" onclick="openProfileModal()">
                     <img th:if="${user.iconBase64 != null}" th:src="${user.iconBase64}" class="profile-img">
@@ -243,8 +290,11 @@
             </div>
 
             <div class="stats-section">
+                
                 <div class="rank-card-box">
-                    <div class="rank-header">CURRENT RANK</div>
+                    <div class="rank-header">
+                        CURRENT RANK
+                    </div>
                     <div class="rank-container">
                         <div class="rank-item">
                             <span class="rank-title">BASIC</span>
@@ -261,14 +311,21 @@
                 </div>
 
                 <div class="goal-card">
-                    <div class="goal-label">MY GOAL</div>
+                    <div class="goal-label">
+                        MY GOAL
+                    </div>
+                    
                     <form th:action="@{/profile/goal}" method="post" style="width:100%; position:relative; z-index: 2;">
-                        <textarea name="goal" class="goal-direct-input" placeholder="CLICK TO TYPE GOAL..." th:text="${userGoal}"></textarea>
+                        <textarea name="goal" class="goal-direct-input" 
+                                  placeholder="CLICK TO TYPE GOAL..."
+                                  th:text="${userGoal}"></textarea>
+                        
                         <div style="text-align: right;">
                             <button type="submit" class="goal-mini-btn" title="UPDATE"></button>
                         </div>
                     </form>
                 </div>
+
             </div>
         </div>
     </div>
@@ -276,28 +333,32 @@
     <div class="modal-overlay" id="profileModal">
         <div class="profile-card-modal">
             <button type="button" class="close-modal-btn" onclick="closeProfileModal()">×</button>
-            <h2 style="font-size:1rem; margin-bottom:20px;">EDIT PROFILE</h2>
+            <h2>EDIT PROFILE</h2>
             <form th:action="@{/profile/update}" method="post" enctype="multipart/form-data">
-                <div class="file-upload-area" style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-bottom:20px;">
-                    <div class="preview-circle" style="width:100px; height:100px; border:4px solid var(--main-border); background:#eee; display:flex; justify-content:center; align-items:center; overflow:hidden;">
-                        <img id="previewImg" class="preview-img-modal" th:src="${user.iconBase64 != null ? user.iconBase64 : ''}" th:style="${user.iconBase64 != null ? 'width:100%;height:100%;object-fit:cover;' : 'display:none;'}">
-                        <span id="previewPlaceholder" th:style="${user.iconBase64 != null ? 'display:none;' : ''}" style="font-size:2rem;">👾</span>
+                <div class="file-upload-area">
+                    <div class="preview-circle">
+                        <img id="previewImg" class="preview-img-modal" 
+                             th:src="${user.iconBase64 != null ? user.iconBase64 : ''}"
+                             th:style="${user.iconBase64 != null ? '' : 'display:none;'}">
+                        <span id="previewPlaceholder" 
+                              th:style="${user.iconBase64 != null ? 'display:none;' : ''}" style="font-size:3rem;">📷</span>
                     </div>
-                    <label class="file-select-btn" style="background:#eee; border:4px solid var(--main-border); padding:5px 10px; font-size:0.7rem; cursor:pointer;">
+                    <label class="file-select-btn">
                         SELECT IMAGE
-                        <input type="file" name="iconFile" class="file-input" accept="image/*" onchange="previewFile(this)" style="display:none;">
+                        <input type="file" name="iconFile" class="file-input" accept="image/*" onchange="previewFile(this)">
                     </label>
                 </div>
-                <div class="input-group" style="text-align:left; margin-bottom:20px;">
-                    <label style="font-size:0.7rem; display:block; margin-bottom:5px;">NICKNAME</label>
-                    <input type="text" name="nickname" class="nickname-input" th:value="${user.nickname}" maxlength="10" style="width:100%; padding:10px; border:4px solid var(--main-border); box-sizing:border-box; font-family:inherit;">
+                <div class="input-group">
+                    <label>NICKNAME</label>
+                    <input type="text" name="nickname" class="nickname-input" 
+                           th:value="${user.nickname}" placeholder="ENTER NICKNAME" maxlength="10">
                 </div>
-                <button type="submit" class="ok-btn" style="width:100%; background:var(--bg-color); border:4px solid var(--main-border); padding:10px; font-family:inherit; cursor:pointer; box-shadow:4px 4px 0px var(--shadow-color);">SAVE CHANGES</button>
+                <button type="submit" class="ok-btn">SAVE CHANGE</button>
             </form>
         </div>
     </div>
 
-    <script>
+    <script th:inline="javascript">
         function openProfileModal() { document.getElementById('profileModal').classList.add('active'); }
         function closeProfileModal() { document.getElementById('profileModal').classList.remove('active'); }
         function previewFile(input) {
