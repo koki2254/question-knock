@@ -181,8 +181,6 @@
 							        th:data-correct="${choice.isCorrect}"
 							        th:data-explanation="${q.explanation}"
 							        
-							        /* ★ここを修正：もしchoiceオブジェクトに元の順番が入っていればそれを使う */
-							        /* 例として、choice.originalIndex というプロパティがある場合 */
 							        th:attr="data-original-index=${choice.originalIndex}" 
 							        
 							        th:onclick="|selectAnswer(this, ${iterStat.index})|">
