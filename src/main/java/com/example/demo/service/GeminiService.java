@@ -15,9 +15,8 @@ public class GeminiService {
     @Value("${gemini.api.key}")
     private String apiKey;
 
- // 1. モデル名の修正（最新のFlashモデルを指定）
-    private static final String GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
-
+    // 最新のGemini 2.5 Flash モデルを使用
+    private static final String GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
     // 2. HttpClientをHTTP/2対応で初期化（使い回す）
     private final HttpClient httpClient = HttpClient.newBuilder()
             .version(HttpClient.Version.HTTP_2)
