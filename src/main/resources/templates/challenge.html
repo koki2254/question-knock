@@ -457,8 +457,10 @@ async function sendMessage() {
     sendBtn.disabled = true;
     sendBtn.innerText = '...';
 
-    const currentBox = document.getElementById('q-container-' + currentQuestionIndex);
-    const questionText = currentBox.querySelector('.hidden-question-text').value;
+// 現在表示されている問題（activeクラス）からテキストを取得
+    const currentBox = document.querySelector('.question-box.active');
+    // question-textクラスからテキストを直接取得（hiddenフィールドを介さない）
+    const questionText = currentBox.querySelector('.question-text').innerText;
 
     try {
         const response = await fetch('/api/ai/ask', {
